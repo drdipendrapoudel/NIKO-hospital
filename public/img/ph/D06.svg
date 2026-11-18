@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" width="600" height="720" role="img" aria-label="Placeholder portrait D06">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3ecf7"/><stop offset="1" stop-color="#c3d5ec"/></linearGradient></defs>
+<rect width="600" height="720" fill="url(#g)"/>
+<circle cx="300" cy="250" r="110" fill="#1f487c" fill-opacity=".18"/>
+<path d="M90 720c0-130 95-215 210-215s210 85 210 215z" fill="#1f487c" fill-opacity=".18"/>
+<rect x="190" y="300" width="220" height="120" rx="24" fill="#1f487c"/>
+<text x="300" y="390" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="88" fill="#fff">D06</text>
+<text x="300" y="470" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="30" fill="#163559">Dr. Prajwal Ram Ghimire</text>
+<text x="300" y="512" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="24" fill="#163559" fill-opacity=".8">Portrait placeholder D06</text>
+</svg>

@@ -1,0 +1,25 @@
+{
+  "name": "niko-hospital-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NIKO Hospital Pvt. Ltd. website — public site, online booking and admin panel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "placeholders": "node tools/make-placeholders.js",
+    "build:preview": "node tools/build-preview.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.2",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^6.9.16"
+  }
+}
