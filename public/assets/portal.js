@@ -147,7 +147,8 @@
     P.tab = tab || '';
     var role = a.type === 'staff' ? roleName(a.staffRole) : t('Patient', 'बिरामी');
     var extra = a.roles.map(function (r) { return { director: 'Director', owner: 'Owner', verifier: 'Payment checker' }[r]; }).filter(Boolean).join(', ');
-    return head(t('Hello', 'नमस्ते') + ', ' + ((a.profile && a.profile.name) || a.email).split(' ')[0], role + (extra ? ' · ' + extra : '')) +
+    var nm = ((a.profile && a.profile.name) || a.email).split(' '), first = /^dr\.?$/i.test(nm[0]) && nm[1] ? nm[0] + ' ' + nm[1] : nm[0];
+    return head(t('Hello', 'नमस्ते') + ', ' + first, role + (extra ? ' · ' + extra : '')) +
       '<section class="section"><div class="container dash"><nav class="dside" aria-label="' + esc(T('dashboard')) + '"><div class="who"><b>' + esc((a.profile && a.profile.name) || a.email) + '</b><small>' + esc(a.email) + '</small></div>' +
       tabs.map(function (x) { return '<a href="#/dashboard' + (x[0] ? '/' + x[0] : '') + '"' + (x[0] === P.tab ? ' aria-current="page"' : '') + '>' + icon(x[1]) + esc(x[2]) + (x[0] === 'notes' && a.unread ? '<span class="badge">' + a.unread + '</span>' : '') + '</a>'; }).join('') +
       '</nav><div class="dmain" id="dmain">' + (a.type === 'staff' && a.status !== 'active' && !a.seesAll ? '<div class="alert warn" style="margin-bottom:14px">' + esc(a.status === 'rejected' ? t('Your staff account was not approved. Please contact the hospital management.', 'तपाईंको कर्मचारी खाता स्वीकृत भएन ।') : t('Your staff account is waiting for the Director’s approval. You will get an email when it is approved.', 'तपाईंको कर्मचारी खाता सञ्चालकको स्वीकृतिको पर्खाइमा छ ।')) + '</div>' : '') +

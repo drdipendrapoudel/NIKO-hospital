@@ -59,6 +59,10 @@ if (!content) { content = JSON.parse(JSON.stringify(DEFAULT_CONTENT)); content.m
     if (!('degreeLevel' in d)) { d.degreeLevel = 'MD'; changed = true; }
     if (!('videoConsult' in d)) { d.videoConsult = !(Number(d.monthlyWeek) > 0); changed = true; }
   });
+  // The Director is Dr. Dipendra Poudel (told to us on 24 Nov 2026); replace the placeholder name only.
+  if (content.director && content.director.name && content.director.name.en === 'Name of Director') {
+    content.director.name = { en: 'Dr. Dipendra Poudel', ne: 'डा. दिपेन्द्र पौडेल' }; content.director.designation = { en: 'Director', ne: 'सञ्चालक' }; changed = true;
+  }
   if (!(m.designVersion >= 2)) {
     const t = content.theme;
     if (t.primary === '#1f487c' && t.accent === '#2f80c9') { t.primary = '#1a5bb0'; t.primaryDark = '#0e3a73'; t.accent = '#f26b1d'; }

@@ -268,7 +268,7 @@
       '<header class="hdr"><div class="container"><a class="brand" href="#/" aria-label="' + esc(L(h.name)) + ' — ' + esc(T('home')) + '">' + img(h.logo, '', '', true) +
       '<span><b>' + esc(L(h.shortName) || L(h.name)) + '</b><small>' + esc(L(h.slogan)) + '</small></span></a>' +
       '<nav class="nav" aria-label="Main">' + nav + '</nav>' +
-      '<div class="tools"><button class="search-btn hide-m" data-act="search">' + icon('search') + esc(T('search')) + '</button>' +
+      '<div class="tools"><button class="search-btn hide-m" data-act="search" aria-label="' + esc(T('search')) + '">' + icon('search') + '<span>' + esc(T('search')) + '</span></button>' +
       '<button class="icon-btn hide-l" data-act="search" aria-label="' + esc(T('search')) + '">' + icon('search') + '</button>' +
       '<span id="acctSlot">' + acctButton('acct-btn hide-m') + '</span>' +
       '<button class="icon-btn hide-l" data-act="menu" aria-label="' + esc(T('menu')) + '" aria-expanded="false" aria-controls="drawer">' + icon('menu') + (a && a.unread ? '<span class="badge">' + a.unread + '</span>' : '') + '</button></div></div></header></div>' + ticker +
@@ -392,7 +392,7 @@
         '<div class="dgrid">' + (C.departments || []).slice(0, 6).map(deptCard).join('') + '</div></div></section>';
     },
     director: function (sec) {
-      var d = C.director; if (!d || d.show === false || !L(d.message)) return '';
+      var d = C.director; if (!d || d.show === false || !L(d.message) || /will appear here/i.test(L(d.message))) return '';
       return '<section class="section dband"><div class="container inner"><div class="portrait">' + img(photoOf(d), L(d.name)) + '<div class="nm"><b>' + esc(L(d.name)) + '</b><small>' + esc(L(d.designation)) + '</small></div></div>' +
         '<div><span class="eyebrow">' + esc(L(sec.title) || T('directorMessage')) + '</span><div class="q" aria-hidden="true">“</div><blockquote>' + esc(truncate(L(d.message), 520)) + '</blockquote>' +
         '<div class="who"><b>' + esc(L(d.name)) + '</b><span>' + esc(L(d.designation)) + ' · ' + esc(L(C.hospital.shortName)) + '</span></div>' +
