@@ -36,6 +36,40 @@ This folder holds the hospital's public website, online appointment booking and 
 
 ---
 
+## 1b. Phase 2 (Nov 2026)
+
+| Feature | Where it is |
+|---|---|
+| New look (blue with orange buttons, inspired by modern hospital sites) | Whole site. Fonts are stored in `public/fonts` (Poppins and Mukta, SIL Open Font License). |
+| Accounts for patients and staff | **Sign in** (top right, or the side tab). Email → 6-digit code → password → “Patient” or “Staff” (Lab, Pharmacy, Management, Nursing, Doctor). Doctors pick their name from the doctor list. Staff accounts wait for the Director’s approval. |
+| Director | Create your account in **Admin → Website accounts & Director** (or sign up on the website and press *Make Director* there). The Director’s dashboard has Approvals, People & access (roles: Owner, Payment checker, Director; OPD access to other doctors), Send message / notice, and sees everything. |
+| Notifications, private messages, targeted notices | Dashboard → Messages. The Director/owner send to groups (all staff, nurses, lab…) or chosen people. Shown on the dashboard and emailed. |
+| Doctor profiles | Doctor → Dashboard → My public profile (photo, degrees, bio…). Changes go live after the Director approves them. |
+| Video consultation | `#/consult`: doctor → date/time → pay by Fonepay/eSewa QR → upload receipt → “Done”. The owner (or a Payment checker) confirms the receipt; then the Director, owner and doctor get the call link. The call runs inside the website (WebRTC). The doctor can email the patient a join link. Fee: MD Rs 700, DM Rs 950 (set each doctor’s level in Admin → Doctors). Backup room on meet.jit.si if video cannot connect. |
+| Lab | `#/lab`: test list, home sample collection, pay online or on collection. Lab staff dashboard: OPD orders from doctors, home collections, result entry → PDF report on the patient’s account, upload a report PDF, and reports from the lab email bridge. |
+| Lab email bridge | Reports emailed to `lab@nikoaspatal.com.np` are matched to the patient by **name + age**; unclear ones wait in “Unmatched reports”. Setup: `tools/cloudflare-email-worker.js`. |
+| OPD cards | `/opd.html` — Dr. Dipendra Poudel’s OPD system for every doctor. Each doctor sees only their own patients; the Director and owner can open any doctor’s OPD. Lab orders go straight to the lab staff; results come back into the card. |
+| Slideshow timing | Admin → Slideshow: seconds per slide, and show-from / show-until dates. |
+| Department photos | Admin → Departments → Photo. The photo fades into the card. |
+| Articles | Admin → Articles: success stories, new services, news, health alerts, Director’s articles. Choose which show on the home page and how many (Home page sections → articles count). |
+| Health check-ups, medicine refill, second opinion, health risk check, grievance officer, incident reports, gallery, “Why NIKO”, awards | Menu → Lab & check-ups / Services, and the footer. Requests go to the right staff dashboard. |
+
+### New server settings (Railway → Variables)
+
+```
+BREVO_API_KEY=...                     # free at brevo.com (300 emails/day). Needed for sign-up codes and alerts.
+MAIL_FROM=no-reply@nikoaspatal.com.np # a sender address verified in Brevo
+MAIL_FROM_NAME=NIKO Hospital
+LAB_INBOUND_SECRET=<long random text> # same value in the Cloudflare email worker
+SITE_URL=https://nikoaspatal.com.np   # optional; links in emails (otherwise taken from the first visit)
+DIRECTOR_EMAIL=you@example.com        # optional; this email becomes Director when it signs up
+OWNER_EMAIL=owner@example.com         # optional; this email becomes Owner when it signs up
+TURN_URL / TURN_USER / TURN_PASS      # optional; a TURN server if some video calls cannot connect
+```
+Railway’s Hobby plan blocks SMTP, so emails go through Brevo’s HTTPS API. Private files (receipts, prescriptions, reports) are kept in `/data/private` and OPD cards in `/data/opd` next to `UPLOAD_DIR`, never served publicly.
+
+---
+
 ## 2. Run it on a computer (to try it)
 
 You need **Node.js 18 or newer** (https://nodejs.org).

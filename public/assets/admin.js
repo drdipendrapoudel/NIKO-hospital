@@ -379,6 +379,7 @@
         var list = r[0], mail = r[1];
         $('#inboxBody').innerHTML = '<div class="banner">Patients and staff create their own accounts on the website (Sign in → Create account). <b>To become the Director:</b> create your own account on the website first, then press “Make Director” next to it here. After that you can approve staff and give roles from your website dashboard.</div>' +
           '<p class="small muted">Emails sent today: ' + mail.sentToday + ' / ' + mail.limit + ' · sending by: <b>' + esc(mail.via) + '</b>' + (mail.via === 'none' ? ' — set BREVO_API_KEY and MAIL_FROM on the server to send emails' : '') + '</p>' +
+          '<details class="card" style="margin-bottom:12px"><summary><b>Create an account here</b> <span class="small muted">(useful for the Director’s own account before email sign-up is set up)</span></summary><form data-form="mkacct" style="display:grid;gap:8px;max-width:420px;margin-top:10px"><input name="name" placeholder="Full name" required><input name="email" type="email" placeholder="Email" required><input name="password" type="password" placeholder="Password (8+ characters)" required minlength="8"><label class="chk"><input type="checkbox" name="director" checked> Director</label><label class="chk"><input type="checkbox" name="owner"> Owner</label><button class="btn" type="submit">Create account</button><div class="msg" role="status"></div></form></details>' +
           '<div class="tw"><table><thead><tr><th>Person</th><th>Type</th><th>Status</th><th>Roles</th><th></th></tr></thead><tbody>' + (list.length ? list.map(function (a) {
             return '<tr><td><b>' + esc(a.profile.name || '—') + '</b><br><span class="small muted">' + esc(a.email) + '</span></td><td>' + esc(a.type === 'staff' ? a.staffRole : a.type || '—') + '</td><td>' + esc(a.status) + '</td><td>' + esc(a.roles.join(', ') || '—') + '</td>' +
               '<td style="white-space:nowrap">' + (a.roles.indexOf('director') < 0 ? '<button class="btn ghost sm" data-a="acct-role" data-id="' + esc(a.id) + '" data-r="director">Make Director</button> ' : '<button class="btn ghost sm" data-a="acct-unrole" data-id="' + esc(a.id) + '" data-r="director">Remove Director</button> ') +
@@ -525,6 +526,11 @@
   document.addEventListener('submit', function (e) {
     var f = e.target, k = f.getAttribute('data-form'); if (!k) return; e.preventDefault();
     var msg = $('.msg', f);
+    if (k === 'mkacct') {
+      req('POST', 'api/admin/accounts', { name: f.name.value, email: f.email.value, password: f.password.value, roles: [f.director.checked && 'director', f.owner.checked && 'owner'].filter(Boolean) })
+        .then(function () { toast('Account created. Sign in on the website with this email and password.'); INBOX.webaccounts(); }).catch(function (err) { msg.className = 'msg err'; msg.textContent = err.message; });
+      return;
+    }
     var body = k === 'pw' ? { current: f.current.value, next: f.next.value } : { name: f.name.value, password: f.password.value };
     req('POST', k === 'pw' ? 'api/admin/password' : 'api/admin/users', body).then(function () { msg.className = 'msg ok'; msg.textContent = 'Done ✓'; f.reset(); if (k === 'user') INBOX.account(); }).catch(function (err) { msg.className = 'msg err'; msg.textContent = err.message; });
   });
