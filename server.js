@@ -16,11 +16,19 @@ const sheet = require('./lib/sheet');
 const notify = require('./lib/notify');
 const schedule = require('./public/assets/schedule');
 const DEFAULT_CONTENT = require('./content/default-content');
+const mailer = require('./lib/mailer');
+const accounts = require('./lib/accounts');
+const portal = require('./lib/portal');
+const opdLib = require('./lib/opd');
 
 const PORT = Number(process.env.PORT || 3000);
 const PROD = process.env.NODE_ENV === 'production';
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// Private files (payment receipts, prescriptions, lab reports) are never served publicly.
+const PRIVATE_DIR = process.env.PRIVATE_DIR || path.join(path.dirname(path.resolve(UPLOAD_DIR)), 'private');
+const OPD_DIR = process.env.OPD_DIR || path.join(path.dirname(path.resolve(UPLOAD_DIR)), 'opd');
+let SITE_URL = (process.env.SITE_URL || '').replace(/\/$/, '');
 
 // ------------------------------------------------------------------ data setup
 let content = store.read('content', null);
@@ -33,6 +41,32 @@ if (!content) { content = JSON.parse(JSON.stringify(DEFAULT_CONTENT)); content.m
     else if (v && typeof v === 'object' && !Array.isArray(v) && target[k] && typeof target[k] === 'object' && !Array.isArray(target[k])) upgrade(target[k], v);
   }
 }(content, DEFAULT_CONTENT));
+
+// Phase 2 (Nov 2026): new home sections, slide timing, per-doctor video consultation and the blue/orange design.
+(function migrate() {
+  const m = content.meta || (content.meta = {});
+  let changed = false;
+  const defSecs = DEFAULT_CONTENT.home.sections;
+  const secs = content.home.sections = Array.isArray(content.home.sections) ? content.home.sections : [];
+  defSecs.forEach((d, i) => {
+    let s = secs.find((x) => x.id === d.id);
+    if (!s) { s = JSON.parse(JSON.stringify(d)); const before = defSecs.slice(0, i).map((x) => x.id).reverse().find((id) => secs.some((x) => x.id === id)); secs.splice(before ? secs.findIndex((x) => x.id === before) + 1 : secs.length, 0, s); changed = true; }
+    if (!s.eyebrow) { s.eyebrow = JSON.parse(JSON.stringify(d.eyebrow)); changed = true; }
+  });
+  const slideKeys = { eyebrow: { en: '', ne: '' }, tab: { en: '', ne: '' }, seconds: Number(content.theme.slideIntervalSeconds) || 6, startDate: '', endDate: '' };
+  (content.slides || []).forEach((s) => Object.keys(slideKeys).forEach((k) => { if (!(k in s)) { s[k] = JSON.parse(JSON.stringify(slideKeys[k])); changed = true; } }));
+  (content.doctors || []).forEach((d) => {
+    if (!('degreeLevel' in d)) { d.degreeLevel = 'MD'; changed = true; }
+    if (!('videoConsult' in d)) { d.videoConsult = !(Number(d.monthlyWeek) > 0); changed = true; }
+  });
+  if (!(m.designVersion >= 2)) {
+    const t = content.theme;
+    if (t.primary === '#1f487c' && t.accent === '#2f80c9') { t.primary = '#1a5bb0'; t.primaryDark = '#0e3a73'; t.accent = '#f26b1d'; }
+    secs.forEach((s) => { if (s.id === 'news' || s.id === 'stories') s.visible = false; });
+    m.designVersion = 2; changed = true;
+  }
+  if (changed) store.write('content', content);
+}());
 
 const users = store.read('users', {});
 if (!Object.keys(users).length) {
@@ -65,6 +99,7 @@ function publicContent() {
   c.answeredQuestions = questions.filter((q) => q.published && q.answer)
     .map((q) => ({ q: q.question, a: q.answer, date: q.answeredAt }));
   c.notifyChannels = notify.configured();
+  delete c.private;
   return c;
 }
 function versionTag() {
@@ -84,6 +119,7 @@ app.use(helmet({
       'img-src': ["'self'", 'data:', 'blob:', 'https:'],
       'frame-src': ["'self'", 'https://www.google.com', 'https://maps.google.com', 'https://www.facebook.com', 'https://web.facebook.com', 'https://www.tiktok.com', 'https://*.tiktok.com', 'https://www.youtube.com'],
       'connect-src': ["'self'", 'https://*.tiktok.com', 'https://*.tiktokv.com'],
+      'media-src': ["'self'", 'blob:', 'data:'],
       'frame-ancestors': ["'self'"],
       'upgrade-insecure-requests': PROD ? [] : null,
     },
@@ -92,7 +128,8 @@ app.use(helmet({
   hsts: PROD ? { maxAge: 31536000, includeSubDomains: true } : false,
 }));
 app.use(compression());
-app.use(express.json({ limit: '4mb' }));
+app.use((req, res, next) => { if (!SITE_URL && req.get('host') && !/localhost|127\.0\.0\.1/.test(req.get('host'))) SITE_URL = `https://${req.get('host')}`; next(); });
+app.use((req, res, next) => (req.path === '/api/lab/inbound' ? next() : express.json({ limit: '4mb' })(req, res, next)));
 
 // Redirect to HTTPS in production (when behind a proxy that sets x-forwarded-proto)
 if (PROD && process.env.FORCE_HTTPS !== 'false') {
@@ -169,6 +206,7 @@ app.get('/api/admin/content', auth, (req, res) => res.json(content));
 app.put('/api/admin/content', auth, (req, res) => {
   const next = req.body;
   if (!next || typeof next !== 'object' || !next.hospital || !Array.isArray(next.doctors)) return res.status(400).json({ error: 'Invalid content' });
+  next.meta = Object.assign({}, next.meta, { designVersion: content.meta.designVersion });
   store.snapshot('content', content);
   next.meta = { ...(next.meta || {}), updatedAt: new Date().toISOString(), updatedBy: req.user };
   delete next.answeredQuestions; delete next.notifyChannels;
@@ -384,6 +422,39 @@ app.get('/api/reviews', async (req, res) => {
   } catch (e) { res.json({ enabled: false, error: e.message }); }
 });
 
+// ------------------------------------------------ accounts, dashboards, OPD
+function saveContent(next, by) {
+  store.snapshot('content', content);
+  next.meta = { ...(next.meta || {}), updatedAt: new Date().toISOString(), updatedBy: by };
+  delete next.answeredQuestions; delete next.notifyChannels;
+  content = next;
+  store.write('content', content);
+}
+const ctx = {
+  prod: PROD, uploadDir: UPLOAD_DIR, privateDir: PRIVATE_DIR, opdDir: OPD_DIR, schedule, adminAuth: auth,
+  content: () => content, saveContent, doctors: () => publicContent().doctors, siteUrl: () => SITE_URL,
+  today: () => schedule.todayInNepal(), bookings: () => bookings,
+  updateBooking(code, doctorId, change) {
+    const b = bookings.find((x) => x.code === code && x.doctorId === doctorId);
+    if (!b) return false;
+    if (change.status) { b.status = change.status; b.history.push({ at: new Date().toISOString(), action: `${change.status} from OPD` }); }
+    if (change.opdPatientId) b.opdPatientId = change.opdPatientId;
+    store.write('bookings', bookings);
+    return true;
+  },
+};
+accounts.mount(app, ctx);
+ctx.opd = opdLib.create(ctx);
+portal.mount(app, ctx);
+app.use('/api/opd', ctx.opd.router);
+app.get('/api/admin/mail-status', auth, (req, res) => res.json(mailer.status()));
+// Notices and messages that waited because of the daily email limit go out once a day after 7 am (Nepal time).
+setInterval(() => {
+  const np = new Date(Date.now() + 345 * 60e3);
+  const day = np.toISOString().slice(0, 10);
+  if (np.getUTCHours() >= 7 && ctx.lastDigest !== day) { ctx.lastDigest = day; mailer.flushDigests(SITE_URL).catch((e) => console.error('[digest]', e.message)); }
+}, 30 * 60e3).unref();
+
 // ----------------------------------------------------------------- static files
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', setHeaders: (res) => res.set('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -391,6 +462,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, p) => { if (/\.(svg|png|jpg|webp)$/.test(p)) res.set('Cache-Control', 'public, max-age=604800'); },
 }));
 app.get('/admin', (req, res) => res.redirect('/admin.html'));
+app.get('/opd', (req, res) => res.redirect('/opd.html'));
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
 app.listen(PORT, () => console.log(`NIKO Hospital website running on http://localhost:${PORT}  (admin: /admin.html)`));

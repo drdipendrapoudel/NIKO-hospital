@@ -92,6 +92,8 @@ const D = (n, enName, neName, dept, enTitle, neTitle, degrees, nmc, schedule, ex
   focus: extra.focus || [],
   bio: t(extra.bio || ''),
   featured: !!extra.featured,
+  degreeLevel: extra.degreeLevel || 'MD',
+  videoConsult: schedule !== 'first-sat',
   visible: true,
 });
 
@@ -495,6 +497,22 @@ const facilities = [
     'PFT measures how well your lungs work and is used to diagnose and monitor asthma, COPD and other lung diseases.'),
 ];
 
+// ------------------------------------------------------------ lab tests
+// TEMPLATE list: the hospital will send the real list and prices. Empty price = “ask at the lab”.
+const LAB_TESTS = [
+  ['Haematology', ['Complete Blood Count (CBC)', 'Haemoglobin (Hb)', 'ESR', 'Platelet count', 'Blood group & Rh type', 'PT / INR', 'Peripheral blood smear']],
+  ['Diabetes', ['Fasting blood sugar (FBS)', 'Post-prandial blood sugar (PP)', 'Random blood sugar (RBS)', 'HbA1c']],
+  ['Kidney & liver', ['Renal function test (Urea, Creatinine, Electrolytes)', 'Liver function test (LFT)', 'Uric acid', 'Serum calcium']],
+  ['Heart & cholesterol', ['Lipid profile', 'Troponin I', 'CK-MB']],
+  ['Thyroid & hormones', ['Thyroid function test (T3, T4, TSH)', 'TSH', 'Urine pregnancy test (UPT)']],
+  ['Infection & serology', ['C-reactive protein (CRP)', 'Widal test', 'Typhidot', 'Dengue NS1 antigen', 'Dengue IgM / IgG', 'HBsAg', 'Anti-HCV', 'HIV I & II', 'VDRL', 'RA factor', 'ASO titre', 'Malaria antigen']],
+  ['Urine & stool', ['Urine routine examination', 'Urine culture & sensitivity', 'Stool routine examination', 'Stool occult blood']],
+  ['Vitamins', ['Vitamin D (25-OH)', 'Vitamin B12']],
+].flatMap(([category, names]) => names.map((name) => ({
+  id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40),
+  category, name, price: '', sample: /urine|stool/i.test(name) ? (/stool/i.test(name) ? 'Stool' : 'Urine') : 'Blood', fasting: /fasting|lipid/i.test(name), homeCollection: true, visible: true,
+})));
+
 // --------------------------------------------------------------------- export
 module.exports = {
   meta: { version: 1, updatedAt: '' },
@@ -532,9 +550,9 @@ module.exports = {
   },
 
   theme: {
-    primary: '#1f487c',
-    primaryDark: '#163559',
-    accent: '#2f80c9',
+    primary: '#1a5bb0',
+    primaryDark: '#0e3a73',
+    accent: '#f26b1d',
     emergency: '#c62828',
     background: '#f5f8fc',
     surface: '#ffffff',
@@ -561,19 +579,25 @@ module.exports = {
       ['slideshow', '', ''],
       ['quickActions', '', ''],
       ['stats', '', ''],
-      ['visiting', 'Visiting super-specialists', 'भ्रमणमा आउने सुपरस्पेसलिष्ट'],
-      ['departments', 'Our departments', 'हाम्रा विभागहरू'],
-      ['doctors', 'Meet our specialists', 'हाम्रा विशेषज्ञ डाक्टरहरू'],
-      ['conditions', 'Conditions we treat', 'हामीले उपचार गर्ने रोगहरू'],
-      ['facilities', 'Facilities & diagnostics', 'सुविधा तथा जाँचहरू'],
-      ['about', 'About NIKO Hospital', 'निको अस्पतालको बारेमा'],
-      ['news', 'News & events', 'समाचार तथा कार्यक्रम'],
-      ['stories', 'Patient stories', 'बिरामीका कथाहरू'],
-      ['reviews', 'What patients say', 'बिरामीहरू के भन्छन्'],
-      ['accreditations', 'Registration & recognition', 'दर्ता तथा मान्यता'],
-      ['social', 'Follow us', 'हामीलाई फलो गर्नुहोस्'],
-      ['location', 'Find us', 'हामीलाई भेट्नुहोस्'],
-    ].map(([id, en, ne]) => ({ id, visible: true, title: t(en, ne), subtitle: t('') })),
+      ['departments', 'Our departments', 'हाम्रा विभागहरू', 'Specialities'],
+      ['director', 'Message from our Director', 'सञ्चालकको सन्देश', ''],
+      ['pillars', 'Why NIKO Hospital', 'किन निको अस्पताल', 'Why choose us'],
+      ['visiting', 'Visiting super-specialists', 'भ्रमणमा आउने सुपरस्पेसलिष्ट', 'Every month'],
+      ['doctors', 'Meet our specialists', 'हाम्रा विशेषज्ञ डाक्टरहरू', 'Our doctors'],
+      ['services', 'Services', 'सेवाहरू', 'Online services'],
+      ['articles', 'Stories, news & health updates', 'कथा, समाचार तथा स्वास्थ्य जानकारी', 'From NIKO'],
+      ['conditions', 'Conditions we treat', 'हामीले उपचार गर्ने रोगहरू', ''],
+      ['facilities', 'Facilities & diagnostics', 'सुविधा तथा जाँचहरू', 'Facilities'],
+      ['about', 'About NIKO Hospital', 'निको अस्पतालको बारेमा', ''],
+      ['news', 'News & events', 'समाचार तथा कार्यक्रम', ''],
+      ['stories', 'Patient stories', 'बिरामीका कथाहरू', ''],
+      ['reviews', 'What patients say', 'बिरामीहरू के भन्छन्', 'Reviews'],
+      ['gallery', 'Gallery', 'फोटो ग्यालरी', 'Inside NIKO'],
+      ['accreditations', 'Awards, registration & recognition', 'पुरस्कार, दर्ता तथा मान्यता', 'Recognition'],
+      ['social', 'Follow us', 'हामीलाई फलो गर्नुहोस्', ''],
+      ['location', 'Find us', 'हामीलाई भेट्नुहोस्', ''],
+    ].map(([id, en, ne, eyebrow]) => ({ id, visible: !['news', 'stories'].includes(id), title: t(en, ne), subtitle: t(''), eyebrow: t(eyebrow || '') })),
+    articleCount: 3,
     noticeTicker: true,
     importantNoticePopup: true,
   },
@@ -581,16 +605,16 @@ module.exports = {
   slides: [
     { image: 'img/P01-building-wide.jpg', photoNo: 'P01', title: t('NIKO Hospital, Hetauda', 'निको अस्पताल, हेटौंडा'),
       text: t('24-hour emergency and pharmacy. Specialist doctors every day.', '२४ घण्टा आकस्मिक तथा फार्मेसी सेवा । प्रत्येक दिन विशेषज्ञ डाक्टर ।'),
-      buttonText: t('Book an appointment', 'अपोइन्टमेन्ट बुक गर्नुहोस्'), buttonLink: '#/book', visible: true },
+      buttonText: t('Book an appointment', 'अपोइन्टमेन्ट बुक गर्नुहोस्'), buttonLink: '#/book', eyebrow: t('24-hour emergency'), tab: t('Care, day and night'), seconds: 7, startDate: '', endDate: '', visible: true },
     { image: ph(15), photoNo: 'P15', title: t('Visiting super-specialists every month', 'प्रत्येक महिना सुपरस्पेसलिष्ट डाक्टर'),
       text: t('Senior cardiologist and chest & lung specialist — first Saturday of every month.', 'वरिष्ठ मुटुरोग तथा छाती-फोक्सो रोग विशेषज्ञ — प्रत्येक महिनाको पहिलो शनिवार ।'),
-      buttonText: t('See schedule', 'तालिका हेर्नुहोस्'), buttonLink: '#/doctors', visible: true },
+      buttonText: t('See schedule', 'तालिका हेर्नुहोस्'), buttonLink: '#/doctors', eyebrow: t('Super-specialists'), tab: t('Visiting specialists'), seconds: 6, startDate: '', endDate: '', visible: true },
     { image: ph(16), photoNo: 'P16', title: t('22 specialists under one roof', 'एउटै छानामुनि २२ विशेषज्ञ'),
       text: t('Cardiology, orthopaedics, neurosurgery, gynaecology, ENT, skin, psychiatry, paediatrics, surgery, urology and more.', ''),
-      buttonText: t('Find a doctor', 'डाक्टर खोज्नुहोस्'), buttonLink: '#/doctors', visible: true },
+      buttonText: t('Find a doctor', 'डाक्टर खोज्नुहोस्'), buttonLink: '#/doctors', eyebrow: t('Specialist OPD'), tab: t('22 specialists'), seconds: 6, startDate: '', endDate: '', visible: true },
     { image: ph(6), photoNo: 'P06', title: t('Operation theatre, HDU, lab & imaging', 'ओटी, एचडीयू, ल्याब तथा इमेजिङ'),
       text: t('Diagnosis and treatment in one place — ECG, 2D Echo, ultrasound, X-ray, NPL and PFT.', ''),
-      buttonText: t('Our facilities', 'हाम्रा सुविधाहरू'), buttonLink: '#/facilities', visible: true },
+      buttonText: t('Our facilities', 'हाम्रा सुविधाहरू'), buttonLink: '#/facilities', eyebrow: t('Diagnostics'), tab: t('Lab, imaging & OT'), seconds: 6, startDate: '', endDate: '', visible: true },
   ],
 
   stats: [
@@ -723,6 +747,66 @@ module.exports = {
     portalIntro: t('Our secure patient portal is coming soon. You will be able to view lab reports, download prescriptions, see upcoming visits and pay bills online.', 'हाम्रो सुरक्षित बिरामी पोर्टल छिट्टै आउँदैछ ।'),
     privacy: t('NIKO Hospital respects your privacy. Information you give us when booking an appointment, sending feedback or asking a question is used only to provide your care and to contact you. We do not sell or share your information with others except where required by law. Medical records are kept confidential and only authorised staff can access them. All information is sent over an encrypted (HTTPS) connection. To ask about, correct or delete your information, contact us at 057-520223.', ''),
     footerNote: t('© NIKO Hospital Pvt. Ltd., Hetauda. All rights reserved.', '© निको अस्पताल प्रा. लि., हेटौंडा ।'),
+  },
+
+  // --------------------------------------------------------- Phase 2 additions
+  // Payment QR codes (upload in Admin → Payments) used for video consultation, lab and packages.
+  payments: {
+    fonepayQr: '',
+    esewaQr: '',
+    accountName: t('NIKO Hospital Pvt. Ltd.', 'निको अस्पताल प्रा. लि.'),
+    whatsapp: '9855068737',
+    instructions: t('Scan the QR code with your Fonepay or eSewa app, pay the exact amount, then take a screenshot of the receipt and upload it below.', 'आफ्नो फोनपे वा इसेवा एपबाट QR स्क्यान गरी रकम तिर्नुहोस्, अनि रसिदको स्क्रिनसट तल अपलोड गर्नुहोस् ।'),
+  },
+
+  consult: {
+    enabled: true,
+    feeMD: 700,
+    feeDM: 950,
+    slotMinutes: 15,
+    intro: t('See a NIKO Hospital specialist by video call from home. Choose a doctor and time, pay by Fonepay or eSewa, upload the receipt — and join the call from this website at your appointment time.', 'घरबाटै भिडियो कलमार्फत निको अस्पतालका विशेषज्ञसँग परामर्श गर्नुहोस् ।'),
+    notFor: t('Not for emergencies. For chest pain, breathing difficulty, heavy bleeding, unconsciousness or injury, come to the Emergency or call 057-520223.', 'आकस्मिक अवस्थाका लागि होइन । आकस्मिक अवस्थामा ०५७-५२०२२३ मा फोन गर्नुहोस् ।'),
+  },
+
+  lab: {
+    intro: t('Our laboratory is open 24 hours. Book tests online and our lab staff will collect the sample from your home. Reports appear in your account as a PDF.', 'हाम्रो प्रयोगशाला २४ घण्टा खुला रहन्छ । अनलाइन बुक गर्नुहोस्, हाम्रा ल्याब कर्मचारी घरमै नमुना लिन आउनेछन् ।'),
+    homeCollection: true,
+    homeCollectionFee: 0,
+    collectionSlots: ['7:00–9:00 am', '9:00–11:00 am', '11:00 am–1:00 pm', '2:00–4:00 pm'],
+    note: t('Template list — the hospital will replace it with the full test list and prices.', ''),
+    tests: LAB_TESTS,
+  },
+
+  packages: [
+    { id: 'basic', name: t('Basic Health Check-up', 'आधारभूत स्वास्थ्य जाँच'), price: '', forWhom: t('Adults, once a year'), tests: ['Complete blood count (CBC)', 'Fasting blood sugar', 'Lipid profile', 'Kidney function (urea, creatinine)', 'Urine routine', 'Doctor consultation'], description: t('A yearly check of blood count, sugar, cholesterol and kidneys.'), visible: true },
+    { id: 'diabetes', name: t('Diabetes Check-up', 'मधुमेह जाँच'), price: '', forWhom: t('People with diabetes or high risk'), tests: ['Fasting & PP blood sugar', 'HbA1c', 'Lipid profile', 'Kidney function', 'Urine microalbumin', 'Doctor consultation'], description: t('Checks sugar control and early kidney and heart risk.'), visible: true },
+    { id: 'heart', name: t('Heart Check-up', 'मुटु जाँच'), price: '', forWhom: t('Adults over 40, smokers, high BP'), tests: ['ECG', '2D Echo', 'Lipid profile', 'Fasting blood sugar', 'Kidney function', 'Doctor consultation'], description: t('Heart tracing, heart ultrasound and blood tests for heart risk.'), visible: true },
+    { id: 'women', name: t('Women’s Health Check-up', 'महिला स्वास्थ्य जाँच'), price: '', forWhom: t('Women of all ages'), tests: ['CBC', 'Thyroid (TSH)', 'Fasting blood sugar', 'Vitamin D', 'Ultrasound abdomen & pelvis', 'Gynaecologist consultation'], description: t('Blood count, thyroid, sugar, vitamin D and pelvic ultrasound.'), visible: true },
+  ],
+
+  pillars: [
+    { title: t('Specialists every day', 'प्रत्येक दिन विशेषज्ञ'), text: t('22+ specialist doctors and visiting super-specialists every month.'), icon: 'stethoscope', visible: true },
+    { title: t('24-hour emergency', '२४ घण्टा आकस्मिक'), text: t('Emergency, HDU, pharmacy and lab open day and night.'), icon: 'emergency', visible: true },
+    { title: t('Diagnosis under one roof', 'एउटै छानामुनि जाँच'), text: t('Lab, X-ray, ultrasound, ECG, 2D Echo, NPL and PFT.'), icon: 'scan', visible: true },
+    { title: t('Care from home', 'घरबाटै सेवा'), text: t('Video consultation, home sample collection and reports online.'), icon: 'globe', visible: true },
+    { title: t('Caring and close to you', 'हेरचाह र नजिक'), text: t('In the heart of Hetauda, with staff who treat you like family.'), icon: 'heart', visible: true },
+  ],
+  pillarsImage: 'img/P01-building.jpg',
+
+  articles: [
+    { id: 'welcome', category: 'news', date: '2026-11-24', image: 'img/P01-building-wide.jpg', title: t('Video consultation and home lab tests now online', 'भिडियो परामर्श र घरमै ल्याब जाँच अब अनलाइन'), summary: t('You can now see a NIKO specialist by video call and book lab tests with home sample collection from our website.'), body: t('NIKO Hospital now offers video consultations with our specialists and home sample collection for lab tests.\n\nCreate a free account with your email, choose a doctor and a time, and pay by Fonepay or eSewa. Your lab reports will appear in your account as PDFs.'), author: t('NIKO Hospital'), showOnHome: true, visible: true },
+  ],
+
+  gallery: [
+    { image: 'img/P01-building.jpg', caption: t('NIKO Hospital, Hetauda'), visible: true },
+  ],
+
+  grievance: {
+    officerName: '',
+    designation: t('Information & Grievance Officer', 'सूचना तथा गुनासो अधिकारी'),
+    phone: '057-520223',
+    email: '',
+    intro: t('If you are unhappy with any of our services, please tell us. Every complaint is read by the Information & Grievance Officer and answered as soon as possible. You can also ask for public information about the hospital here.', 'हाम्रो सेवाबारे गुनासो भए हामीलाई भन्नुहोस् ।'),
   },
 
   // Overrides for menu / button text. Leave empty to use the built-in text.

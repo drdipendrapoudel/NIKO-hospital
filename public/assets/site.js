@@ -78,6 +78,26 @@
     font: '<path d="M4 20l6-16 6 16M6.5 14h7M17 20l2.5-6 2.5 6M18 18h3"/>',
     contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>',
     up: '<path d="M18 15l-6-6-6 6"/>',
+    down: '<path d="M6 9l6 6 6-6"/>',
+    video: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/>',
+    flask: '<path d="M9 2h6M10 2v6L4.5 18.5A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.8-2.5L14 8V2"/><path d="M7 15h10"/>',
+    box: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+    refill: '<path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7zM8.5 8.5l7 7"/><path d="M17 21h5M19.5 18.5v5"/>',
+    chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/><path d="M8 11h8M8 14h5"/>',
+    gauge: '<path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0z"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
+    award: '<circle cx="12" cy="8" r="6"/><path d="M8.2 13.2L7 22l5-3 5 3-1.2-8.8"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+    users: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/>',
+    send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+    mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0M12 17v5"/>',
+    micoff: '<path d="M2 2l20 20M9 9v2a3 3 0 0 0 5.1 2.1M15 9.3V5a3 3 0 0 0-5.9-.7M19 10a7 7 0 0 1-1 3.6M5 10a7 7 0 0 0 11.3 5.5M12 17v5"/>',
+    camoff: '<path d="M2 2l20 20M16 16H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2M10 6h4a2 2 0 0 1 2 2v3l6-3v10"/>',
+    image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+    newspaper: '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9h4"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   };
   function icon(n, extra) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + (IC[n] || IC.stethoscope) + '</svg>'; }
 
@@ -203,47 +223,85 @@
   function navLinks() {
     return [['#/about', 'about'], ['#/departments', 'departments'], ['#/doctors', 'doctors'], ['#/conditions', 'conditions'], ['#/facilities', 'facilities'], ['#/notices', 'notices'], ['#/contact', 'contact']];
   }
+  // Main menu: [label key, link or null, [ [href, icon, title key, description key], … ] ]
+  function menu() {
+    return [
+      ['about', '#/about', [['#/about', 'info', 'about', 'mAbout'], ['#/articles', 'newspaper', 'articles', 'mArticles'], ['#/gallery', 'image', 'gallery', 'mGallery'], ['#/notices', 'bell', 'notices', 'mNotices']]],
+      ['appointments', null, [['#/book', 'cal', 'book', 'mBook'], ['#/consult', 'video', 'videoConsult', 'mVideo'], ['#/doctors', 'user', 'doctors', 'mDoctors'], ['#/my-booking', 'clock', 'myBooking', 'mMyBooking']]],
+      ['departments', '#/departments', null],
+      ['labPackages', null, [['#/lab', 'flask', 'labTests', 'mLab'], ['#/packages', 'box', 'packages', 'mPackages'], ['#/dashboard/reports', 'file', 'myReports', 'mReports']]],
+      ['services', null, [['#/refill', 'refill', 'refill', 'mRefill'], ['#/second-opinion', 'chat', 'secondOpinion', 'mSecond'], ['#/risk', 'gauge', 'riskCheck', 'mRisk'], ['#/facilities', 'scan', 'facilities', 'mFacilities'], ['#/conditions', 'heart', 'conditions', 'mConditions']]],
+      ['contact', '#/contact', null],
+    ];
+  }
+  function acct() { return window.NIKO_ACCT || null; }
+  function acctButton(cls) {
+    var a = acct();
+    if (a) return '<a class="' + cls + '" href="#/dashboard">' + icon('user') + '<span>' + esc((a.profile && a.profile.name) || T('myAccount')) + '</span>' + (a.unread ? '<span class="badge">' + a.unread + '</span>' : '') + '</a>';
+    return '<a class="' + cls + '" href="#/login">' + icon('user') + '<span>' + esc(T('signIn')) + '</span></a>';
+  }
   function shell() {
-    var h = C.hospital, cur = location.hash || '#/';
-    var amb = h.ambulance ? '<a class="pill" href="' + tel(h.ambulance) + '">' + icon('phone', ' width="16" height="16"') + esc(T('ambulance')) + ': ' + esc(h.ambulance) + '</a>' : '';
+    var h = C.hospital, cur = '#/' + parseHash().page, a = acct();
     var notices = vis(C.notices).filter(noticeLive);
-    var ticker = C.home.noticeTicker !== false && notices.length ? '<div class="ticker" role="region" aria-label="' + esc(T('notices')) + '"><div class="container"><b>' + icon('bell', ' width="18" height="18"') + '</b><div class="track"><span class="move">' +
+    var ticker = C.home.noticeTicker !== false && notices.length ? '<div class="ticker" role="region" aria-label="' + esc(T('notices')) + '"><div class="container"><b>' + icon('bell') + '</b><div class="track"><span class="move">' +
       notices.map(function (n) { return '<a href="#/notices">' + esc(L(n.title)) + '</a>'; }).join('') + '</span></div></div></div>' : '';
+    var nav = menu().map(function (m, i) {
+      var isCur = m[1] && (cur === m[1] || cur.indexOf(m[1] + '/') === 0) || (m[2] || []).some(function (x) { return x[0] === cur; });
+      if (!m[2]) return '<div class="ni' + (isCur ? ' cur' : '') + '"><a href="' + m[1] + '"' + (isCur ? ' aria-current="page"' : '') + '>' + esc(T(m[0])) + '</a></div>';
+      return '<div class="ni' + (isCur ? ' cur' : '') + '"><button type="button" data-act="dd" aria-expanded="false" aria-controls="dd' + i + '">' + esc(T(m[0])) + icon('down') + '</button><div class="dd" id="dd' + i + '">' +
+        m[2].map(function (x) { return '<a href="' + x[0] + '"><span class="di">' + icon(x[1]) + '</span><span><b>' + esc(T(x[2])) + '</b><small>' + esc(T(x[3])) + '</small></span></a>'; }).join('') + '</div></div>';
+    }).join('');
+    var drawer = menu().map(function (m) {
+      if (!m[2]) return '<a href="' + m[1] + '">' + esc(T(m[0])) + '</a>';
+      return '<div class="grp">' + esc(T(m[0])) + '</div>' + m[2].map(function (x) { return '<a href="' + x[0] + '">' + icon(x[1]) + esc(T(x[2])) + '</a>'; }).join('');
+    }).join('');
     return '<a class="skip" href="#/" data-act="skip">' + esc(T('skip')) + '</a>' +
-      '<div class="topwrap"><div class="ebar" role="region" aria-label="' + esc(T('emergency24')) + '"><div class="container">' +
-      '<span class="lbl"><span class="pulse" aria-hidden="true"></span><span class="hide-s">' + esc(T('emergency24')) + ':</span></span>' +
-      '<a class="pill" href="' + tel(h.phone24) + '">' + icon('phone', ' width="16" height="16"') + esc(h.phone24) + '</a>' + amb +
-      '<span class="spacer"></span><span class="hide-m" style="gap:6px"><button class="fz" data-act="font-down" aria-label="' + esc(T('smaller')) + '">A−</button><button class="fz" data-act="font-up" aria-label="' + esc(T('larger')) + '">A+</button><button class="fz" data-act="contrast" aria-pressed="' + st.hc + '" aria-label="' + esc(T('contrast')) + '">' + icon('contrast') + '</button></span><a class="pill" href="' + esc(h.directionsUrl) + '" target="_blank" rel="noopener">' + icon('nav', ' width="16" height="16"') + esc(T('directions')) + '</a></div></div>' +
+      '<div class="topwrap"><div class="ubar" role="region" aria-label="' + esc(T('emergency24')) + '"><div class="container">' +
+      '<a class="em" href="' + tel(h.phone24) + '"><span class="dot" aria-hidden="true"></span><span class="hide-s">' + esc(T('emergency24')) + ':</span> ' + esc(h.phone24) + '</a>' +
+      (h.ambulance ? '<a href="' + tel(h.ambulance) + '">' + icon('phone') + esc(T('ambulance')) + ': ' + esc(h.ambulance) + '</a>' : '') +
+      '<span class="hide-s">' + icon('clock') + '&nbsp;' + esc(T('open247short')) + '</span>' +
+      '<span class="spacer"></span>' +
+      '<a class="ub-pill hide-s" href="#/dashboard/reports">' + icon('file') + esc(T('labReport')) + '</a>' +
+      '<span class="hide-m" style="gap:6px"><button class="fz" data-act="font-down" aria-label="' + esc(T('smaller')) + '">A−</button><button class="fz" data-act="font-up" aria-label="' + esc(T('larger')) + '">A+</button><button class="fz" data-act="contrast" aria-pressed="' + st.hc + '" aria-label="' + esc(T('contrast')) + '">' + icon('contrast') + '</button></span>' +
+      '<a href="' + esc(h.directionsUrl) + '" target="_blank" rel="noopener">' + icon('nav') + '<span class="hide-s">' + esc(T('directions')) + '</span></a>' +
+      '<button data-act="lang" aria-label="' + esc(T('language')) + '" lang="' + (lang === 'ne' ? 'en' : 'ne') + '">' + icon('globe') + (lang === 'ne' ? 'English' : 'नेपाली') + '</button></div></div>' +
       '<header class="hdr"><div class="container"><a class="brand" href="#/" aria-label="' + esc(L(h.name)) + ' — ' + esc(T('home')) + '">' + img(h.logo, '', '', true) +
       '<span><b>' + esc(L(h.shortName) || L(h.name)) + '</b><small>' + esc(L(h.slogan)) + '</small></span></a>' +
-      '<nav class="nav" aria-label="Main">' + navLinks().map(function (n) { return '<a href="' + n[0] + '"' + (cur === n[0] || (n[0] !== '#/' && cur.indexOf(n[0]) === 0) ? ' aria-current="page"' : '') + '>' + esc(T(n[1])) + '</a>'; }).join('') + '</nav>' +
-      '<div class="tools"><button class="icon-btn" data-act="search" aria-label="' + esc(T('search')) + '">' + icon('search') + '</button>' +
-      '<button class="icon-btn" data-act="lang" aria-label="' + esc(T('language')) + '" lang="' + (lang === 'ne' ? 'en' : 'ne') + '">' + (lang === 'ne' ? 'EN' : 'नेपाली') + '</button>' +
-      '<a class="btn sm hide-m" href="#/book">' + icon('cal') + esc(T('bookShort')) + '</a>' +
-      '<button class="icon-btn hide-l" data-act="menu" aria-label="' + esc(T('menu')) + '" aria-expanded="false" aria-controls="drawer">' + icon('menu') + '</button></div></div></header></div>' + ticker +
+      '<nav class="nav" aria-label="Main">' + nav + '</nav>' +
+      '<div class="tools"><button class="search-btn hide-m" data-act="search">' + icon('search') + esc(T('search')) + '</button>' +
+      '<button class="icon-btn hide-l" data-act="search" aria-label="' + esc(T('search')) + '">' + icon('search') + '</button>' +
+      '<span id="acctSlot">' + acctButton('acct-btn hide-m') + '</span>' +
+      '<button class="icon-btn hide-l" data-act="menu" aria-label="' + esc(T('menu')) + '" aria-expanded="false" aria-controls="drawer">' + icon('menu') + (a && a.unread ? '<span class="badge">' + a.unread + '</span>' : '') + '</button></div></div></header></div>' + ticker +
       '<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="' + esc(T('menu')) + '"><div class="scrim" data-act="menu-close"></div><div class="panel">' +
       '<button class="icon-btn" data-act="menu-close" style="align-self:flex-end" aria-label="' + esc(T('close')) + '">' + icon('x') + '</button>' +
-      [['#/', 'home']].concat(navLinks()).concat([['#/book', 'book'], ['#/my-booking', 'myBooking'], ['#/news', 'news'], ['#/stories', 'stories'], ['#/qa', 'qa'], ['#/feedback', 'feedback'], ['#/portal', 'portal']]).map(function (n) { return '<a href="' + n[0] + '">' + esc(T(n[1])) + '</a>'; }).join('') +
+      (a ? '<a href="#/dashboard" style="background:var(--tint)">' + icon('grid') + esc(T('dashboard')) + (a.unread ? ' <span class="badge" style="position:static">' + a.unread + '</span>' : '') + '</a>' : '<a href="#/login" style="background:var(--tint)">' + icon('user') + esc(T('signIn')) + ' / ' + esc(T('signUp')) + '</a>') +
+      '<a href="#/">' + icon('grid') + esc(T('home')) + '</a>' + drawer +
+      '<div class="grp">' + esc(T('more')) + '</div>' + [['#/qa', 'qa', 'chat'], ['#/feedback', 'feedback', 'star'], ['#/grievance', 'grievance', 'shield'], ['#/incident', 'reportIncident', 'info']].map(function (n) { return '<a href="' + n[0] + '">' + icon(n[2]) + esc(T(n[1])) + '</a>'; }).join('') +
       '<div class="row"><button class="icon-btn" data-act="font-down" aria-label="' + esc(T('smaller')) + '">A−</button><button class="icon-btn" data-act="font-up" aria-label="' + esc(T('larger')) + '">A+</button><button class="icon-btn" data-act="contrast" aria-pressed="' + st.hc + '">' + icon('contrast') + esc(T('contrast')) + '</button></div></div></div>' +
       '<div class="search-pop" id="searchPop" role="dialog" aria-modal="true" aria-label="' + esc(T('search')) + '"><div class="search-box"><div class="search-row"><label class="sr-only" for="searchInput">' + esc(T('search')) + '</label><input id="searchInput" type="search" autocomplete="off" placeholder="' + esc(T('searchPlaceholder')) + '" aria-controls="searchResults">' +
       '<button class="icon-btn" data-act="search-close" aria-label="' + esc(T('close')) + '">' + icon('x') + '</button></div><ul class="results" id="searchResults" role="listbox"></ul></div></div>' +
       '<main id="main" tabindex="-1"></main>' + footer() +
       '<nav class="mbar" aria-label="Quick actions"><a class="red" href="' + tel(h.phone24) + '">' + icon('phone') + esc(T('call')) + '</a><a class="book" href="#/book">' + icon('cal') + esc(T('bookShort')) + '</a>' +
-      '<a href="#/doctors">' + icon('user') + esc(lang === 'ne' ? 'डाक्टर' : 'Doctors') + '</a><a href="' + esc(h.directionsUrl) + '" target="_blank" rel="noopener">' + icon('nav') + esc(T('directions')) + '</a></nav>' +
+      '<a href="#/consult">' + icon('video') + esc(T('videoShort')) + '</a><a href="#/lab">' + icon('flask') + esc(T('labShort')) + '</a>' +
+      (a ? '<a href="#/dashboard">' + icon('user') + esc(T('account')) + (a.unread ? '<span class="badge">' + a.unread + '</span>' : '') + '</a>' : '<a href="#/login">' + icon('user') + esc(T('signIn')) + '</a>') + '</nav>' +
+      '<div class="sidetab" aria-label="' + esc(T('account')) + '">' + (a ? '<a href="#/dashboard">' + icon('grid') + esc(T('dashboard')) + (a.unread ? '<span class="badge">' + a.unread + '</span>' : '') + '</a><a href="#/dashboard/notes">' + icon('bell') + esc(T('messages')) + '</a>'
+        : '<a href="#/login">' + icon('user') + esc(T('signIn')) + '</a><a href="#/login?signup=1">' + icon('users') + esc(T('signUp')) + '</a>') + '</div>' +
+      '<button class="totop" data-act="totop" aria-label="Back to top">' + icon('up') + '</button>' +
       (st.demo ? '<div class="preview-badge">' + esc(T('offline')) + '</div>' : '') + '<div class="sr-only" aria-live="polite" id="announce"></div>';
   }
   function footer() {
     var h = C.hospital, s = C.social || {}, r = C.registration || {};
-    return '<footer><div class="container"><div class="cols"><div><div class="brand" style="color:#fff">' + img(h.logo, '') + '<span><b style="color:#fff">' + esc(L(h.name)) + '</b><small style="color:#c8d6ea">' + esc(L(h.tagline)) + '</small></span></div>' +
-      '<p style="margin-top:12px">' + esc(L(h.address)) + '</p>' + socialLinks(s, true) + '</div>' +
-      '<div><h3>' + esc(T('ourServices')) + '</h3><ul>' + [['#/book', 'book'], ['#/doctors', 'doctors'], ['#/departments', 'departments'], ['#/conditions', 'conditions'], ['#/facilities', 'facilities'], ['#/portal', 'portal']].map(fl).join('') + '</ul></div>' +
-      '<div><h3>' + esc(T('about')) + '</h3><ul>' + [['#/about', 'about'], ['#/notices', 'notices'], ['#/news', 'news'], ['#/stories', 'stories'], ['#/qa', 'qa'], ['#/feedback', 'feedback'], ['#/privacy', 'privacy']].map(fl).join('') + '</ul></div>' +
-      '<div><h3>' + esc(T('contact')) + '</h3><ul><li><a href="' + tel(h.phone24) + '">' + esc(T('emergency24')) + ': ' + esc(h.phone24) + '</a></li>' +
-      (h.phones || []).filter(function (p) { return p !== h.phone24; }).map(function (p) { return '<li><a href="' + tel(p) + '">' + esc(p) + '</a></li>'; }).join('') +
-      (h.email ? '<li><a href="mailto:' + esc(h.email) + '">' + esc(h.email) + '</a></li>' : '') + '<li>' + esc(L(h.openingHours)) + '</li>' +
-      (r.showOnWebsite !== false ? '<li>' + esc(L(r.registeredWith)) + (r.panNo ? ' · ' + esc(T('pan')) + ' ' + esc(r.panNo) : '') + (r.registrationNo ? ' · ' + esc(T('regNo')) + ' ' + esc(r.registrationNo) : '') + '</li>' : '') + '</ul></div></div>' +
-      '<div class="base">' + esc(L(C.pages.footerNote)) + ' · <a href="#/privacy">' + esc(T('privacy')) + '</a>' + (C.staffMail && C.staffMail.enabled ? ' · <a href="#/staff-mail">' + esc(T('staffMail')) + '</a>' : '') + ' · <a href="admin.html">Staff login</a></div></div></footer>';
     function fl(x) { return '<li><a href="' + x[0] + '">' + esc(T(x[1])) + '</a></li>'; }
+    return '<footer><div class="container"><div class="cols"><div><div class="brand">' + img(h.logo, '') + '<span><b>' + esc(L(h.name)) + '</b><small style="color:#a9bbd6">' + esc(L(h.slogan)) + '</small></span></div>' +
+      '<p style="margin-top:14px">' + esc(L(h.tagline)) + '</p><p>' + esc(L(h.address)) + '</p>' + socialLinks(s, true) + '</div>' +
+      '<div><h3>' + esc(T('forPatients')) + '</h3><ul>' + [['#/book', 'book'], ['#/consult', 'videoConsult'], ['#/doctors', 'doctors'], ['#/lab', 'labTests'], ['#/packages', 'packages'], ['#/refill', 'refill'], ['#/second-opinion', 'secondOpinion'], ['#/risk', 'riskCheck'], ['#/dashboard/reports', 'myReports']].map(fl).join('') + '</ul></div>' +
+      '<div><h3>' + esc(T('quickLinks')) + '</h3><ul>' + [['#/about', 'about'], ['#/departments', 'departments'], ['#/articles', 'articles'], ['#/gallery', 'gallery'], ['#/notices', 'notices'], ['#/qa', 'qa'], ['#/feedback', 'feedback'], ['#/grievance', 'grievance'], ['#/incident', 'reportIncident'], ['#/privacy', 'privacy']].map(fl).join('') + '</ul></div>' +
+      '<div><h3>' + esc(T('getInTouch')) + '</h3><ul><li>' + esc(L(h.openingHours)) + '</li>' +
+      (h.phones || []).map(function (p) { return '<li><a href="' + tel(p) + '">' + icon('phone', ' width="14" height="14" style="display:inline;vertical-align:-2px"') + ' ' + esc(p) + '</a></li>'; }).join('') +
+      (h.email ? '<li><a href="mailto:' + esc(h.email) + '">' + esc(h.email) + '</a></li>' : '') +
+      (r.showOnWebsite !== false ? '<li>' + esc(L(r.registeredWith)) + (r.panNo ? ' · ' + esc(T('pan')) + ' ' + esc(r.panNo) : '') + (r.registrationNo ? ' · ' + esc(T('regNo')) + ' ' + esc(r.registrationNo) : '') + '</li>' : '') + '</ul>' +
+      '<div class="em-box"><a href="' + tel(h.phone24) + '">' + esc(T('emergency24')) + ' ' + esc(h.phone24) + '</a><a class="o" href="' + esc(h.directionsUrl) + '" target="_blank" rel="noopener">' + esc(T('directions')) + '</a></div></div></div>' +
+      '<div class="base"><span>' + esc(L(C.pages.footerNote)) + '</span><a href="#/privacy">' + esc(T('privacy')) + '</a>' + (C.staffMail && C.staffMail.enabled ? '<a href="#/staff-mail">' + esc(T('staffMail')) + '</a>' : '') + '<a href="#/login">' + esc(T('signIn')) + '</a><a href="admin.html">' + esc(T('websiteAdmin')) + '</a></div></div></footer>';
   }
   function socialLinks(s, light) {
     var items = [['facebook', s.facebook, 'Facebook'], ['tiktok', s.tiktok, 'TikTok'], ['instagram', s.instagram, 'Instagram'], ['youtube', s.youtube, 'YouTube'],
@@ -255,8 +313,13 @@
   function head(title, sub, crumbs) {
     return '<div class="page-head"><div class="container">' + (crumbs ? '<div class="crumbs"><a href="#/">' + esc(T('home')) + '</a> › ' + crumbs + '</div>' : '') + '<h1 tabindex="-1">' + esc(title) + '</h1>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div></div>';
   }
-  function secHead(sec, link, linkText) {
-    return '<div class="sec-head"><div><h2>' + esc(L(sec.title)) + '</h2>' + (L(sec.subtitle) ? '<p>' + esc(L(sec.subtitle)) + '</p>' : '') + '</div>' + (link ? '<a class="btn ghost sm" href="' + link + '">' + esc(linkText || T('viewAll')) + ' →</a>' : '') + '</div>';
+  function gradTitle(t) {
+    t = String(t || ''); var i = t.trim().lastIndexOf(' ');
+    return i > 0 ? esc(t.slice(0, i + 1)) + '<span class="grad">' + esc(t.slice(i + 1)) + '</span>' : '<span class="grad">' + esc(t) + '</span>';
+  }
+  function secHead(sec, link, linkText, center) {
+    var eb = L(sec.eyebrow);
+    return '<div class="sec-head' + (center ? ' center' : '') + '"><div>' + (eb ? '<span class="eyebrow">' + esc(eb) + '</span>' : '') + '<h2>' + gradTitle(L(sec.title)) + '</h2>' + (L(sec.subtitle) ? '<p' + (center ? ' style="margin:.6em auto 0"' : '') + '>' + esc(L(sec.subtitle)) + '</p>' : '') + '</div>' + (link && !center ? '<a class="btn ghost sm" href="' + link + '">' + esc(linkText || T('viewAll')) + ' →</a>' : '') + '</div>';
   }
   function docCard(d) {
     var dp = deptOf(d.dept), a = availToday(d), visit = isVisiting(d);
@@ -269,8 +332,15 @@
       '<div class="acts"><a class="btn sm" href="#/book?doctor=' + esc(d.id) + '">' + esc(T('bookShort')) + '</a><a class="btn sm ghost" href="#/doctor/' + esc(d.id) + '">' + esc(T('seeProfile')) + '</a></div></div></article>';
   }
   function deptCard(d) {
-    return '<a class="card dept" href="#/department/' + esc(d.id) + '"><span class="ic">' + icon(d.icon) + '</span><span><h3>' + esc(L(d.name)) + '</h3><p>' + esc(L(d.summary)) + '</p></span></a>';
+    return '<a class="dcard" href="#/department/' + esc(d.id) + '"><span class="ph' + (d.image ? '' : ' noimg') + '">' + (d.image ? img(d.image, '') : '') + '</span><span class="bub">' + icon(d.icon) + '</span>' +
+      '<span class="bd"><h3>' + esc(L(d.name)) + '</h3><p>' + esc(truncate(L(d.summary), 110)) + '</p><span class="link-arrow">' + esc(T('learnMore')) + '</span></span></a>';
   }
+  function articleCard(a, big) {
+    var cat = (I.en['cat_' + a.category] ? T('cat_' + a.category) : a.category) || '';
+    return '<a class="card art' + (big ? ' big' : '') + '" href="#/article/' + esc(a.id) + '">' + img(a.image || 'img/P01-building-wide.jpg', '') + '<span class="bd"><span>' + (cat ? '<span class="tag orange">' + esc(cat) + '</span> ' : '') + '<span class="date">' + esc(fmtDate(a.date)) + '</span></span>' +
+      '<h3>' + esc(L(a.title)) + '</h3><p>' + esc(truncate(L(a.summary), big ? 260 : 140)) + '</p><span class="link-arrow">' + esc(T('readMore')) + '</span></span></a>';
+  }
+  function articlesSorted() { return vis(C.articles).slice().sort(byDateDesc); }
   function facCard(f) {
     return '<article class="card fac" id="' + esc(f.id) + '">' + img(f.image, L(f.name)) + '<div class="bd"><h3>' + esc(L(f.name)) + (f.open247 ? ' <span class="tag green">' + esc(T('open247')) + '</span>' : '') + '</h3><p>' + esc(L(f.description) || L(f.short)) + '</p></div></article>';
   }
@@ -283,23 +353,28 @@
   // ------------------------------------------------------------- home page
   var HOME = {
     slideshow: function () {
-      var slides = vis(C.slides); if (!slides.length) return '';
+      var slides = liveSlides(); if (!slides.length) return '';
+      var cur = st.slideIdx % slides.length, h = C.hospital, r = C.registration || {};
+      var badge = L(r.registeredWith) || L(h.tagline);
       return '<section class="hero" aria-roledescription="carousel" aria-label="Highlights">' + slides.map(function (s, i) {
-        return '<div class="slide' + (i === st.slideIdx % slides.length ? ' on' : '') + '" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' / ' + slides.length + '"' + (i === st.slideIdx % slides.length ? '' : ' aria-hidden="true"') + '>' + img(s.image, L(s.title), '', i === 0) +
-          '<div class="shade"></div><div class="cap"><div class="container"><h2>' + esc(L(s.title)) + '</h2>' + (L(s.text) ? '<p>' + esc(L(s.text)) + '</p>' : '') +
-          (L(s.buttonText) ? '<a class="btn light" href="' + esc(s.buttonLink || '#/book') + '"' + (i === st.slideIdx % slides.length ? '' : ' tabindex="-1"') + '>' + esc(L(s.buttonText)) + '</a>' : '') + '</div></div></div>';
-      }).join('') + (slides.length > 1 ? '<div class="arrows"><button class="prev" data-act="slide-prev" aria-label="Previous slide">‹</button><button class="next" data-act="slide-next" aria-label="Next slide">›</button></div>' +
-        '<button class="pause" data-act="slide-pause" aria-label="' + (st.slidePaused ? 'Play slideshow' : 'Pause slideshow') + '">' + (st.slidePaused ? '▶' : '❚❚') + '</button>' +
-        '<div class="dots">' + slides.map(function (s, i) { return '<button data-act="slide-go" data-i="' + i + '" aria-label="Slide ' + (i + 1) + '" aria-current="' + (i === st.slideIdx % slides.length) + '"></button>'; }).join('') + '</div>' : '') + '</section>';
+        var on = i === cur, link = s.buttonLink || '#/book';
+        var second = link === '#/book' ? ['#/consult', T('videoConsult')] : ['#/book', T('book')];
+        return '<div class="slide' + (on ? ' on' : '') + '" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' / ' + slides.length + '"' + (on ? '' : ' aria-hidden="true"') + '>' + img(s.image, L(s.title), '', i === 0) +
+          '<div class="shade"></div><div class="cap"><div class="container">' + (badge ? '<div class="badge-pill">' + icon('shield') + esc(badge) + '</div>' : '') +
+          (L(s.eyebrow) ? '<div class="eb">' + esc(L(s.eyebrow)) + '</div>' : '') + '<h2>' + esc(L(s.title)) + '</h2>' + (L(s.text) ? '<p>' + esc(L(s.text)) + '</p>' : '') +
+          '<div class="acts">' + (L(s.buttonText) ? '<a class="btn" href="' + esc(link) + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(L(s.buttonText)) + ' →</a>' : '') +
+          '<a class="btn glass" href="' + second[0] + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(second[1]) + '</a></div></div></div></div>';
+      }).join('') + (slides.length > 1 ? '<div class="tabs-row"><div class="container">' + slides.map(function (s, i) {
+        return '<button class="htab" data-act="slide-go" data-i="' + i + '" aria-current="' + (i === cur) + '" style="--dur:' + slideSecs(s) + 's"><small>' + esc(L(s.eyebrow) || ('0' + (i + 1))) + '</small><b>' + esc(L(s.tab) || L(s.title)) + '</b><span class="bar"><i></i></span></button>';
+      }).join('') + '</div></div><button class="pause" data-act="slide-pause" aria-label="' + (st.slidePaused ? 'Play slideshow' : 'Pause slideshow') + '">' + (st.slidePaused ? '▶' : '❚❚') + '</button>' : '') + '</section>';
     },
     quickActions: function () {
       var h = C.hospital;
-      return '<section class="quick" aria-label="Quick actions"><div class="container"><div class="grid">' +
-        '<a class="qa-card" href="#/book"><span class="ic">' + icon('cal') + '</span><b>' + esc(T('book')) + '</b><small>' + esc(T('bookOnline')) + '</small></a>' +
-        '<a class="qa-card" href="#/doctors"><span class="ic">' + icon('user') + '</span><b>' + esc(T('doctors')) + '</b><small>' + esc(T('findDoctor')) + '</small></a>' +
-        '<a class="qa-card red" href="' + tel(h.phone24) + '"><span class="ic">' + icon('phone') + '</span><b>' + esc(T('emergencyNow')) + '</b><small>' + esc(h.phone24) + '</small></a>' +
-        '<a class="qa-card" href="#/conditions"><span class="ic">' + icon('file') + '</span><b>' + esc(T('conditions')) + '</b><small>' + esc(T('healthInfo')) + '</small></a>' +
-        '</div><form class="home-search" role="search" data-form="home-search"><label class="sr-only" for="hs">' + esc(T('search')) + '</label><input id="hs" name="q" type="search" placeholder="' + esc(T('searchPlaceholder')) + '" autocomplete="off"><button class="btn sm" type="submit">' + icon('search') + '<span class="hide-m">' + esc(T('search')) + '</span></button></form></div></section>';
+      var tiles = [['#/book', 'cal', 'book', 'bookOnline'], ['#/consult', 'video', 'videoConsult', 'qVideo'], ['#/doctors', 'user', 'doctors', 'findDoctor'], ['#/lab', 'flask', 'labTests', 'qLab'],
+        ['#/packages', 'box', 'packages', 'qPackages'], ['#/dashboard/reports', 'file', 'labReport', 'qReports'], ['#/second-opinion', 'chat', 'secondOpinion', 'qSecond']];
+      return '<section class="quick" aria-label="Quick actions"><div class="container"><div class="tiles">' + tiles.map(function (t, i) {
+        return '<a class="qa-card' + (i === 1 ? ' orange' : '') + '" href="' + t[0] + '"><span class="ic">' + icon(t[1]) + '</span><span><b>' + esc(T(t[2])) + '</b><small>' + esc(T(t[3])) + '</small></span></a>';
+      }).join('') + '<a class="qa-card red" href="' + tel(h.phone24) + '"><span class="ic">' + icon('phone') + '</span><span><b>' + esc(T('emergencyNow')) + '</b><small>' + esc(h.phone24) + '</small></span></a></div></div></section>';
     },
     stats: function () {
       var s = vis(C.stats).length ? vis(C.stats) : C.stats || []; if (!s.length) return '';
@@ -310,7 +385,42 @@
       return '<section class="section"><div class="container">' + secHead(sec, '#/doctors?day=visiting') + '<div class="grid">' + v.map(docCard).join('') + '</div></div></section>';
     },
     departments: function (sec) {
-      return '<section class="section alt"><div class="container">' + secHead(sec, '#/departments') + '<div class="grid">' + (C.departments || []).slice(0, 8).map(deptCard).join('') + '</div></div></section>';
+      return '<section class="section"><div class="container eco"><div class="intro">' + secHead(sec) +
+        '<p class="muted">' + esc(L(sec.subtitle) ? '' : T('deptIntro')) + '</p>' +
+        '<form class="home-search" role="search" data-form="home-search"><label class="sr-only" for="hs">' + esc(T('search')) + '</label>' + icon('search', ' width="18" height="18" style="color:var(--muted);flex:none"') + '<input id="hs" name="q" type="search" placeholder="' + esc(T('searchDept')) + '" autocomplete="off"><button class="btn sm" type="submit" aria-label="' + esc(T('search')) + '">→</button></form>' +
+        '<a class="link-arrow" href="#/departments">' + esc(T('allDepartments')) + '</a></div>' +
+        '<div class="dgrid">' + (C.departments || []).slice(0, 6).map(deptCard).join('') + '</div></div></section>';
+    },
+    director: function (sec) {
+      var d = C.director; if (!d || d.show === false || !L(d.message)) return '';
+      return '<section class="section dband"><div class="container inner"><div class="portrait">' + img(photoOf(d), L(d.name)) + '<div class="nm"><b>' + esc(L(d.name)) + '</b><small>' + esc(L(d.designation)) + '</small></div></div>' +
+        '<div><span class="eyebrow">' + esc(L(sec.title) || T('directorMessage')) + '</span><div class="q" aria-hidden="true">“</div><blockquote>' + esc(truncate(L(d.message), 520)) + '</blockquote>' +
+        '<div class="who"><b>' + esc(L(d.name)) + '</b><span>' + esc(L(d.designation)) + ' · ' + esc(L(C.hospital.shortName)) + '</span></div>' +
+        (L(d.message).length > 520 ? '<p style="margin-top:14px"><a class="btn glass sm" href="#/about#director">' + esc(T('readMore')) + '</a></p>' : '') + '</div></div></section>';
+    },
+    pillars: function (sec) {
+      var p = vis(C.pillars).slice(0, 5); if (!p.length) return '';
+      return '<section class="section tint"><div class="container">' + secHead(sec, null, null, true) + '<div class="orbit">' +
+        p.map(function (x, i) { return '<div class="pillar"><span class="num">' + (i + 1) + '</span><div><h3>' + esc(L(x.title)) + '</h3><p>' + esc(L(x.text)) + '</p></div></div>'; }).join('') +
+        '<div class="center">' + img(C.pillarsImage || 'img/P01-building.jpg', L(C.hospital.name)) + '</div></div></div></section>';
+    },
+    services: function (sec) {
+      var list = [['#/consult', 'video', 'videoConsult', 'sVideo', 'feature'], ['#/lab', 'flask', 'labTests', 'sLab'], ['#/packages', 'box', 'packages', 'sPackages'], ['#/refill', 'refill', 'refill', 'sRefill'],
+        ['#/second-opinion', 'chat', 'secondOpinion', 'sSecond'], ['#/risk', 'gauge', 'riskCheck', 'sRisk'], ['#/dashboard/reports', 'file', 'labReport', 'sReports'], ['tel:' + String(C.hospital.phone24).replace(/[^\d+]/g, ''), 'phone', 'emergencyNow', 'sEmergency', 'red']];
+      return '<section class="section alt"><div class="container">' + secHead(sec, null, null, true) + '<div class="grid">' + list.map(function (x) {
+        return '<a class="card svc ' + (x[4] || '') + '" href="' + x[0] + '"><span class="ic">' + icon(x[1]) + '</span><h3>' + esc(T(x[2])) + '</h3><p>' + esc(T(x[3])) + '</p><span class="link-arrow">' + esc(T('knowMore')) + '</span></a>';
+      }).join('') + '</div></div></section>';
+    },
+    articles: function (sec) {
+      var all = articlesSorted(); if (!all.length) return '';
+      var n = Math.max(1, +C.home.articleCount || 3);
+      var chosen = all.filter(function (a) { return a.showOnHome !== false; }).slice(0, n);
+      if (!chosen.length) chosen = all.slice(0, n);
+      return '<section class="section"><div class="container">' + secHead(sec, '#/articles') + '<div class="grid g3">' + chosen.map(function (a, i) { return articleCard(a, i === 0 && chosen.length > 3); }).join('') + '</div></div></section>';
+    },
+    gallery: function (sec) {
+      var g = vis(C.gallery); if (!g.length) return '';
+      return '<section class="section"><div class="container">' + secHead(sec, '#/gallery') + galleryGrid(g.slice(0, 8)) + '</div></section>';
     },
     doctors: function (sec) {
       var f = doctors().filter(function (d) { return d.featured && !isVisiting(d); });
@@ -319,15 +429,15 @@
     },
     conditions: function (sec) {
       var list = vis(C.conditions).slice(0, 18);
-      return '<section class="section alt"><div class="container">' + secHead(sec, '#/conditions') + '<div class="chips" style="gap:10px">' + list.map(function (c) { return '<a class="chip" href="#/condition/' + esc(c.id) + '">' + esc(L(c.name)) + '</a>'; }).join('') + '</div></div></section>';
+      return '<section class="section tint"><div class="container">' + secHead(sec, '#/conditions') + '<div class="chips" style="gap:10px">' + list.map(function (c) { return '<a class="chip" href="#/condition/' + esc(c.id) + '">' + esc(L(c.name)) + '</a>'; }).join('') + '</div></div></section>';
     },
     facilities: function (sec) {
       return '<section class="section"><div class="container">' + secHead(sec, '#/facilities') + '<div class="grid">' + vis(C.facilities).slice(0, 8).map(facCard).join('') + '</div></div></section>';
     },
     about: function (sec) {
-      var a = C.about, d = C.director;
-      return '<section class="section alt"><div class="container split"><div><h2>' + esc(L(sec.title) || L(a.title)) + '</h2><p>' + esc(L(a.intro)) + '</p>' +
-        (d && d.show !== false ? '<div class="director" style="margin-top:18px">' + img(photoOf(d), L(d.name)) + '<div><h3>' + esc(T('directorMessage')) + '</h3><blockquote>' + esc(truncate(L(d.message), 260)) + '</blockquote><p style="margin-top:8px"><b>' + esc(L(d.name)) + '</b><br><span class="muted">' + esc(L(d.designation)) + '</span></p></div></div>' : '') +
+      var a = C.about, d = C.director, band = (C.home.sections || []).some(function (x) { return x.id === 'director' && x.visible !== false; });
+      return '<section class="section alt"><div class="container split"><div>' + (L(sec.eyebrow) ? '<span class="eyebrow">' + esc(L(sec.eyebrow)) + '</span>' : '') + '<h2>' + gradTitle(L(sec.title) || L(a.title)) + '</h2><p>' + esc(L(a.intro)) + '</p>' +
+        (d && d.show !== false && !band ? '<div class="director" style="margin-top:18px">' + img(photoOf(d), L(d.name)) + '<div><h3>' + esc(T('directorMessage')) + '</h3><blockquote>' + esc(truncate(L(d.message), 260)) + '</blockquote><p style="margin-top:8px"><b>' + esc(L(d.name)) + '</b><br><span class="muted">' + esc(L(d.designation)) + '</span></p></div></div>' : '') +
         '<a class="btn ghost" href="#/about">' + esc(T('readMore')) + '</a></div><div>' + img(a.image, L(C.hospital.name)) + '</div></div></section>';
     },
     news: function (sec) {
@@ -344,9 +454,9 @@
     },
     accreditations: function (sec) {
       var a = vis(C.accreditations), r = C.registration || {}; if (!a.length) return '';
-      return '<section class="section alt"><div class="container">' + secHead(sec) + '<div class="grid">' + a.map(function (x) {
-        return '<div class="card" style="display:flex;gap:14px;align-items:center">' + (x.image ? img(x.image, L(x.name), '', false).replace('<img', '<img style="width:64px;height:64px;object-fit:contain"') : '<span class="dept"><span class="ic">' + icon('check') + '</span></span>') + '<div><b>' + esc(L(x.name)) + '</b><div class="muted small">' + esc(L(x.detail)) + '</div></div></div>';
-      }).join('') + '</div>' + (r.showOnWebsite !== false && (r.registrationNo || r.licenceNo) ? '<p class="muted small" style="margin-top:12px">' + [r.registrationNo ? T('regNo') + ' ' + r.registrationNo : '', r.licenceNo ? 'Licence ' + r.licenceNo + (r.licenceAuthority ? ' (' + r.licenceAuthority + ')' : '') : ''].filter(Boolean).map(esc).join(' · ') + '</p>' : '') + '</div></section>';
+      return '<section class="section alt" id="awards"><div class="container">' + secHead(sec, null, null, true) + '<div class="grid">' + a.map(function (x) {
+        return '<div class="card award">' + (x.image ? img(x.image, L(x.name)) : '<span class="ic">' + icon('award') + '</span>') + '<div>' + (x.year ? '<div class="yr">' + esc(x.year) + '</div>' : '') + '<b>' + esc(L(x.name)) + '</b><div class="muted small">' + esc(L(x.detail)) + '</div></div></div>';
+      }).join('') + '</div>' + (r.showOnWebsite !== false && (r.registrationNo || r.licenceNo) ? '<p class="muted small" style="margin-top:12px;text-align:center">' + [r.registrationNo ? T('regNo') + ' ' + r.registrationNo : '', r.licenceNo ? 'Licence ' + r.licenceNo + (r.licenceAuthority ? ' (' + r.licenceAuthority + ')' : '') : ''].filter(Boolean).map(esc).join(' · ') + '</p>' : '') + '</div></section>';
     },
     social: function (sec) {
       var s = C.social || {};
@@ -413,23 +523,23 @@
       return head(L(a.title), L(C.hospital.tagline)) + '<section class="section"><div class="container split" style="align-items:start"><div><p style="font-size:1.1rem"><b>' + esc(L(a.intro)) + '</b></p><p style="white-space:pre-line">' + esc(L(a.body)) + '</p>' +
         (L(a.mission) ? '<h2>' + esc(T('mission')) + '</h2><p>' + esc(L(a.mission)) + '</p>' : '') + (L(a.vision) ? '<h2>' + esc(T('vision')) + '</h2><p>' + esc(L(a.vision)) + '</p>' : '') +
         ((a.values || []).length ? '<h2>' + esc(T('values')) + '</h2><ul class="chips">' + a.values.map(function (v) { return '<li>' + esc(L(v)) + '</li>'; }).join('') + '</ul>' : '') + '</div><div>' + img(a.image, L(C.hospital.name)) + '</div></div></section>' +
-        (d && d.show !== false ? '<section class="section alt"><div class="container"><h2>' + esc(T('directorMessage')) + '</h2><div class="director">' + img(photoOf(d), L(d.name)) + '<div><blockquote>' + esc(L(d.message)) + '</blockquote><p style="margin-top:10px"><b>' + esc(L(d.name)) + '</b><br><span class="muted">' + esc(L(d.designation)) + '</span></p></div></div></div></section>' : '') +
-        HOME.stats() + HOME.accreditations({ title: { en: T('registration') + ' & recognition', ne: 'दर्ता तथा मान्यता' } }) +
+        (d && d.show !== false ? '<section class="section alt" id="director"><div class="container"><h2>' + esc(T('directorMessage')) + '</h2><div class="director">' + img(photoOf(d), L(d.name)) + '<div><blockquote>' + esc(L(d.message)) + '</blockquote><p style="margin-top:10px"><b>' + esc(L(d.name)) + '</b><br><span class="muted">' + esc(L(d.designation)) + '</span></p></div></div></div></section>' : '') +
+        HOME.stats() + HOME.pillars({ title: { en: T('whyNiko'), ne: T('whyNiko') }, eyebrow: { en: '' } }) + HOME.accreditations({ title: { en: T('awardsTitle'), ne: T('awardsTitle') } }) +
         (r.showOnWebsite !== false ? '<section class="section"><div class="container"><div class="table-wrap"><table><tbody>' +
           [[T('registration'), L(r.registeredWith)], [T('regNo'), r.registrationNo], ['Company Reg. No.', r.companyRegNo], [T('pan'), r.panNo], ['Licence', r.licenceNo && (r.licenceNo + (r.licenceAuthority ? ' — ' + r.licenceAuthority : ''))], [T('beds'), C.hospital.beds]]
             .filter(function (x) { return x[1]; }).map(function (x) { return '<tr><th scope="row">' + esc(x[0]) + '</th><td>' + esc(x[1]) + '</td></tr>'; }).join('') + '</tbody></table></div></div></section>' : '');
     },
     departments: function () {
-      return head(T('departments'), '', esc(T('departments'))) + '<section class="section"><div class="container"><div class="grid">' + (C.departments || []).map(deptCard).join('') + '</div></div></section>';
+      return head(T('departments'), T('deptIntro'), esc(T('departments'))) + '<section class="section"><div class="container"><div class="dgrid">' + (C.departments || []).map(deptCard).join('') + '</div></div></section>';
     },
     department: function (id) {
       var d = deptOf(id); if (!d) return notFound();
       var docs = doctors().filter(function (x) { return x.dept === id; }), conds = vis(C.conditions).filter(function (c) { return c.dept === id; });
       return head(L(d.name), L(d.summary), '<a href="#/departments">' + esc(T('departments')) + '</a>') + '<section class="section"><div class="container">' +
-        (d.image ? img(d.image, L(d.name)).replace('<img', '<img style="border-radius:var(--radius);margin-bottom:20px;max-height:360px;width:100%;object-fit:cover"') : '') +
+        (d.image ? '<div class="dept-hero">' + img(d.image, L(d.name)) + '<div class="txt"><span class="eyebrow" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)">' + esc(T('department')) + '</span><h2>' + esc(L(d.name)) + '</h2><p style="margin:0">' + esc(L(d.summary)) + '</p></div></div>' : '') +
         (docs.length ? '<h2>' + esc(T('doctors')) + '</h2><div class="grid" style="margin-bottom:28px">' + docs.map(docCard).join('') + '</div>' : '') +
         (conds.length ? '<h2>' + esc(T('relatedConditions')) + '</h2><div class="chips" style="margin-bottom:24px">' + conds.map(function (c) { return '<a class="chip" href="#/condition/' + esc(c.id) + '">' + esc(L(c.name)) + '</a>'; }).join('') + '</div>' : '') +
-        '<a class="btn" href="#/book?dept=' + esc(id) + '">' + icon('cal') + esc(T('book')) + '</a></div></section>';
+        '<p style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn" href="#/book?dept=' + esc(id) + '">' + icon('cal') + esc(T('book')) + '</a><a class="btn ghost" href="#/consult">' + icon('video') + esc(T('videoConsult')) + '</a></p></div></section>';
     },
     doctors: function (_, q) {
       st.docFilter = { q: q.q || '', dept: q.dept || '', cond: q.cond || '', lang: '', gender: '', day: q.day || '' };
@@ -489,7 +599,7 @@
         '<section class="section alt"><div class="container"><h2>' + esc(T('ourServices')) + '</h2><div class="grid">' + vis(C.services).map(function (s) { return '<div class="card dept"><span class="ic">' + icon(s.icon) + '</span><span><h3>' + esc(L(s.name)) + '</h3><p>' + esc(L(s.description)) + '</p></span></div>'; }).join('') + '</div></div></section>';
     },
     notices: function () {
-      var types = ['all', 'notice', 'vacancy', 'event', 'holiday'];
+      var types = ['all', 'notice', 'vacancy'];
       return head(T('notices'), '', esc(T('notices'))) + '<section class="section"><div class="container" style="max-width:900px"><div class="tabs" role="group" aria-label="' + esc(T('filterBy')) + '">' +
         types.map(function (t) { return '<button data-act="ntab" data-t="' + t + '" aria-pressed="' + (st.noticeTab === t) + '">' + esc(T(t)) + '</button>'; }).join('') + '</div><div class="card" id="noticeList">' + noticeList() + '</div></div></section>';
     },
@@ -535,6 +645,23 @@
       return head(T('portal'), T('portalSoon'), esc(T('portal'))) + '<section class="section"><div class="container" style="max-width:760px"><div class="card"><span class="tag amber">' + esc(T('portalSoon')) + '</span><p style="margin-top:10px">' + esc(L(C.pages.portalIntro)) + '</p><p class="muted">' + esc(T('portalFeatures')) + '</p>' +
         '<a class="btn" href="#/my-booking">' + esc(T('myBooking')) + '</a></div></div></section>';
     },
+    articles: function (_, q) {
+      var cats = ['all'].concat(Object.keys(I.en).filter(function (k) { return k.indexOf('cat_') === 0; }).map(function (k) { return k.slice(4); }));
+      var cur = q.c || 'all', list = articlesSorted().filter(function (a) { return cur === 'all' || a.category === cur; });
+      return head(T('articles'), T('mArticles'), esc(T('articles'))) + '<section class="section"><div class="container"><div class="tabs">' + cats.map(function (c) { return '<a href="#/articles' + (c === 'all' ? '' : '?c=' + c) + '"' + (c === cur ? ' aria-current="page"' : '') + '>' + esc(c === 'all' ? T('all') : T('cat_' + c)) + '</a>'; }).join('') + '</div>' +
+        (list.length ? '<div class="grid g3">' + list.map(function (a) { return articleCard(a); }).join('') + '</div>' : '<p class="empty">' + esc(T('newsEmpty')) + '</p>') + '</div></section>';
+    },
+    article: function (id) {
+      var a = vis(C.articles).find(function (x) { return x.id === id; }); if (!a) return notFound();
+      var more = articlesSorted().filter(function (x) { return x.id !== id; }).slice(0, 3);
+      return head(L(a.title), (L(a.author) ? L(a.author) + ' · ' : '') + fmtDate(a.date), '<a href="#/articles">' + esc(T('articles')) + '</a>') + '<section class="section"><div class="container" style="max-width:860px">' +
+        (a.image ? img(a.image, '', 'article-cover') : '') + (L(a.summary) ? '<p style="font-size:1.12rem;font-weight:600;color:var(--navy)">' + esc(L(a.summary)) + '</p>' : '') +
+        '<div class="article-body">' + L(a.body).split(/\n{2,}/).map(function (para) { return '<p>' + esc(para) + '</p>'; }).join('') + '</div></div></section>' +
+        (more.length ? '<section class="section alt"><div class="container"><h2>' + esc(T('moreArticles')) + '</h2><div class="grid g3">' + more.map(function (x) { return articleCard(x); }).join('') + '</div></div></section>' : '');
+    },
+    gallery: function () {
+      return head(T('gallery'), T('mGallery'), esc(T('gallery'))) + '<section class="section"><div class="container">' + (vis(C.gallery).length ? galleryGrid(vis(C.gallery)) : '<p class="empty">—</p>') + '</div></section>';
+    },
     privacy: function () { return head(T('privacy'), '', esc(T('privacy'))) + '<section class="section"><div class="container" style="max-width:860px"><p style="white-space:pre-line">' + esc(L(C.pages.privacy)) + '</p></div></section>'; },
     'staff-mail': function () {
       var m = C.staffMail || {};
@@ -560,6 +687,14 @@
   }
   function notFound() { return head(T('pageNotFound')) + '<section class="section"><div class="container"><a class="btn" href="#/">' + esc(T('home')) + '</a></div></section>'; }
 
+  function galleryGrid(list) {
+    return '<div class="gal">' + list.map(function (g, i) { return '<button type="button" data-act="lightbox" data-src="' + esc(g.image) + '" data-cap="' + esc(L(g.caption)) + '">' + img(g.image, L(g.caption)) + (L(g.caption) ? '<span>' + esc(L(g.caption)) + '</span>' : '') + '</button>'; }).join('') + '</div>';
+  }
+  function liveSlides() {
+    var t = today();
+    return vis(C.slides).filter(function (s) { return (!s.startDate || s.startDate <= t) && (!s.endDate || s.endDate >= t); });
+  }
+  function slideSecs(s) { return Math.max(3, +s.seconds || +C.theme.slideIntervalSeconds || 6); }
   function noticeList() {
     var list = vis(C.notices).filter(noticeLive).filter(function (n) { return st.noticeTab === 'all' || n.type === st.noticeTab; })
       .sort(function (a, b) { return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || byDateDesc(a, b); });
@@ -709,15 +844,17 @@
 
   // ----------------------------------------------------------------- slides
   function startSlides() {
-    clearInterval(st.slideTimer);
-    var n = vis(C.slides).length; if (n < 2 || st.slidePaused || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    st.slideTimer = setInterval(function () { showSlide(st.slideIdx + 1); }, Math.max(3, +C.theme.slideIntervalSeconds || 6) * 1000);
+    clearTimeout(st.slideTimer);
+    var slides = liveSlides(), hero = $('.hero'); if (hero) hero.classList.toggle('paused', !!st.slidePaused);
+    if (slides.length < 2 || st.slidePaused || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var cur = slides[st.slideIdx % slides.length];
+    st.slideTimer = setTimeout(function () { showSlide(st.slideIdx + 1); startSlides(); }, slideSecs(cur) * 1000);
   }
   function showSlide(i) {
     var slides = $$('.hero .slide'); if (!slides.length) return;
     st.slideIdx = (i + slides.length) % slides.length;
     slides.forEach(function (s, k) { var on = k === st.slideIdx; s.classList.toggle('on', on); s.setAttribute('aria-hidden', on ? 'false' : 'true'); $$('a', s).forEach(function (a) { a.tabIndex = on ? 0 : -1; }); });
-    $$('.hero .dots button').forEach(function (b, k) { b.setAttribute('aria-current', k === st.slideIdx); });
+    $$('.hero .htab').forEach(function (b, k) { b.setAttribute('aria-current', 'false'); void b.offsetWidth; b.setAttribute('aria-current', k === st.slideIdx); });
   }
 
   // ----------------------------------------------------------------- router
@@ -747,11 +884,12 @@
       else window.scrollTo(0, 0);
       if (h1 && st.navigated) h1.focus({ preventScroll: true });
     }
-    if (r.page === '') { startSlides(); maybePopup(); } else clearInterval(st.slideTimer);
+    if (r.page === '') { startSlides(); maybePopup(); } else clearTimeout(st.slideTimer);
     if (r.page === 'doctors') filterDoctors();
     if ($('#reviewsBox')) loadReviews();
     if ($('.tiktok-embed') && !st.preview) loadTikTok();
     var an = $('#announce'); if (an && h1) an.textContent = h1.textContent;
+    (window.NIKO_SITE && NIKO_SITE.afterRender || []).forEach(function (f) { try { f(r); } catch (e) { console.error(e); } });
   }
   function maybePopup() {
     if (st.preview || st.popupShown || C.home.importantNoticePopup === false || sstore('popup') === '1') return;
@@ -779,7 +917,11 @@
       case 'slide-next': showSlide(st.slideIdx + 1); startSlides(); break;
       case 'slide-prev': showSlide(st.slideIdx - 1); startSlides(); break;
       case 'slide-go': showSlide(+el.getAttribute('data-i')); startSlides(); break;
-      case 'slide-pause': st.slidePaused = !st.slidePaused; el.textContent = st.slidePaused ? '▶' : '❚❚'; el.setAttribute('aria-label', st.slidePaused ? 'Play slideshow' : 'Pause slideshow'); if (st.slidePaused) clearInterval(st.slideTimer); else startSlides(); break;
+      case 'dd': var ni = el.parentNode, was = ni.classList.contains('open'); $$('.nav .ni.open').forEach(function (x) { x.classList.remove('open'); x.firstChild.setAttribute('aria-expanded', 'false'); }); if (!was) { ni.classList.add('open'); el.setAttribute('aria-expanded', 'true'); } break;
+      case 'totop': window.scrollTo({ top: 0, behavior: 'smooth' }); break;
+      case 'lightbox': var lb = document.createElement('div'); lb.className = 'lightbox'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.innerHTML = '<img src="' + esc(el.getAttribute('data-src')) + '" alt="' + esc(el.getAttribute('data-cap')) + '"><div>' + esc(el.getAttribute('data-cap')) + '</div><button class="btn light sm" data-act="lb-close">' + esc(T('close')) + '</button>'; document.body.appendChild(lb); $('button', lb).focus(); break;
+      case 'lb-close': el.closest('.lightbox').remove(); break;
+      case 'slide-pause': st.slidePaused = !st.slidePaused; el.textContent = st.slidePaused ? '▶' : '❚❚'; el.setAttribute('aria-label', st.slidePaused ? 'Play slideshow' : 'Pause slideshow'); if (st.slidePaused) clearTimeout(st.slideTimer); else startSlides(); break;
       case 'pop-close': sstore('popup', '1'); el.closest('.modal').remove(); break;
       case 'ntab': st.noticeTab = el.getAttribute('data-t'); $$('.tabs button').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); $('#noticeList').innerHTML = noticeList(); break;
       case 'jump': e.preventDefault(); var t = document.getElementById(el.getAttribute('data-target')); if (t) t.scrollIntoView({ behavior: 'smooth' }); break;
@@ -798,6 +940,8 @@
       case 'mcancel': if (!confirm(T('confirmCancel'))) break; api('api/bookings/cancel', { code: st.manage.b.code, phone: st.manage.phone }).then(function (j) { $('#manageBox').innerHTML = manageHTML(j.booking); }); break;
     }
   });
+  document.addEventListener('click', function (e) { if (!e.target.closest('.nav .ni')) $$('.nav .ni.open').forEach(function (x) { x.classList.remove('open'); }); });
+  window.addEventListener('scroll', function () { var b = $('.totop'); if (b) b.classList.toggle('show', window.scrollY > 700); }, { passive: true });
   document.addEventListener('change', function (e) {
     var el = e.target;
     if (el.getAttribute('data-act-change') === 'wdept') { st.wiz.dept = el.value; redrawWizard('select'); }
@@ -815,7 +959,7 @@
     }
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeSearch(); var d = $('#drawer'); if (d) d.classList.remove('open'); var m = $('.modal'); if (m) { sstore('popup', '1'); m.remove(); } }
+    if (e.key === 'Escape') { var lbx = $('.lightbox'); if (lbx) lbx.remove(); $$('.nav .ni.open').forEach(function (x) { x.classList.remove('open'); }); closeSearch(); var d = $('#drawer'); if (d) d.classList.remove('open'); var m = $('.modal'); if (m) { sstore('popup', '1'); m.remove(); } }
     if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName)) { e.preventDefault(); openSearch(); }
     if ($('#searchPop.open') && /ArrowDown|ArrowUp|Enter/.test(e.key)) {
       var links = $$('#searchResults a'), i = links.findIndex(function (a) { return a.classList.contains('active'); });
@@ -853,12 +997,22 @@
   });
   document.addEventListener('error', function (e) { if (e.target && e.target.tagName === 'IMG') e.target.style.visibility = 'hidden'; }, true);
   window.addEventListener('hashchange', function () {
-    st.navigated = true; closeSearch(); var d = $('#drawer'); if (d) d.classList.remove('open');
+    st.navigated = true; closeSearch(); var d = $('#drawer'); if (d) d.classList.remove('open'); $$('.nav .ni.open').forEach(function (x) { x.classList.remove('open'); });
     if (st.preview) { try { parent.postMessage({ type: 'niko-route', route: location.hash }, '*'); } catch (e) {} }
     if (!C) return;
     if (!$('#main')) { renderAll(); return; }
     renderPage();
+    $$('.nav .ni').forEach(function (ni) { var cur = '#/' + parseHash().page; var links = $$('a', ni).map(function (a) { return a.getAttribute('href'); }); ni.classList.toggle('cur', links.some(function (h) { return h === cur || (h !== '#/' && cur.indexOf(h + '/') === 0); })); });
   });
+
+  // ------------------------------------------------- shared with portal.js
+  window.NIKO_SITE = {
+    PAGES: PAGES, HOME: HOME, IC: IC, afterRender: window.NIKO_SITE ? window.NIKO_SITE.afterRender : [],
+    get C() { return C; }, get lang() { return lang; }, st: st, S: S,
+    T: T, L: L, esc: esc, icon: icon, img: img, head: head, secHead: secHead, gradTitle: gradTitle, fmtDate: fmtDate, today: today, vis: vis, tel: tel, waNum: waNum,
+    doctors: doctors, docById: docById, deptOf: deptOf, photoOf: photoOf, scheduleOf: scheduleOf, truncate: truncate, sel: sel, notFound: notFound,
+    renderAll: renderAll, renderPage: renderPage, parseHash: parseHash, acctButton: acctButton, $: $, $$: $$,
+  };
 
   // ------------------------------------------------------------------ start
   lang = store('lang') || ((navigator.language || '').indexOf('ne') === 0 ? 'ne' : 'en');
