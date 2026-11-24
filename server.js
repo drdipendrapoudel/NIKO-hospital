@@ -128,6 +128,12 @@ app.use(helmet({
   hsts: PROD ? { maxAge: 31536000, includeSubDomains: true } : false,
 }));
 app.use(compression());
+// The OPD card page (taken from the doctor's own system) uses inline scripts; it is only usable when signed in.
+app.use((req, res, next) => {
+  if (req.path === '/opd.html') res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+  if (req.path === '/opd.html') res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 app.use((req, res, next) => { if (!SITE_URL && req.get('host') && !/localhost|127\.0\.0\.1/.test(req.get('host'))) SITE_URL = `https://${req.get('host')}`; next(); });
 app.use((req, res, next) => (req.path === '/api/lab/inbound' ? next() : express.json({ limit: '4mb' })(req, res, next)));
 

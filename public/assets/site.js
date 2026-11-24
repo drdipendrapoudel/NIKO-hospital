@@ -1011,7 +1011,7 @@
     get C() { return C; }, get lang() { return lang; }, st: st, S: S,
     T: T, L: L, esc: esc, icon: icon, img: img, head: head, secHead: secHead, gradTitle: gradTitle, fmtDate: fmtDate, today: today, vis: vis, tel: tel, waNum: waNum,
     doctors: doctors, docById: docById, deptOf: deptOf, photoOf: photoOf, scheduleOf: scheduleOf, truncate: truncate, sel: sel, notFound: notFound,
-    renderAll: renderAll, renderPage: renderPage, parseHash: parseHash, acctButton: acctButton, $: $, $$: $$,
+    renderAll: renderAll, renderPage: renderPage, shell: shell, parseHash: parseHash, acctButton: acctButton, $: $, $$: $$,
   };
 
   // ------------------------------------------------------------------ start

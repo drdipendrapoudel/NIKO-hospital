@@ -50,6 +50,12 @@
     tableFontSize: 'Table text size (px)', logoSize: 'Logo size (px)', primaryDark: 'Primary dark', mutedText: 'Muted text', fontFamily: 'Font style',
     conditionPrepare: 'General “How to prepare” text', conditionDisclaimer: 'Health information disclaimer', portalIntro: 'Patient portal text', footerNote: 'Footer copyright text',
     patientName: 'Patient name (or initials)', consent: 'Patient gave written consent to publish',
+    eyebrow: 'Small label above the title', tab: 'Short text on the slide tab', seconds: 'Show this slide for … seconds', startDate: 'Show from (optional)', endDate: 'Show until (optional)',
+    degreeLevel: 'Degree level (sets video consultation fee)', videoConsult: 'Takes video consultations', fonepayQr: 'Fonepay QR code image', esewaQr: 'eSewa QR code image', accountName: 'Account name shown under the QR',
+    feeMD: 'Video consultation fee – MD doctors (Rs)', feeDM: 'Video consultation fee – DM doctors (Rs)', homeCollectionFee: 'Home collection charge (Rs, 0 = free)', collectionSlots: 'Collection time slots (one per line)',
+    homeCollection: 'Offer home sample collection', notFor: 'Warning text (not for emergencies)', price: 'Price (Rs, empty = ask at the hospital)', forWhom: 'Who it is for', tests: 'Tests included',
+    sample: 'Sample', fasting: 'Needs fasting', category: 'Category', showOnHome: 'Show on the home page', author: 'Written by', caption: 'Caption', pillarsImage: 'Photo in the middle of “Why NIKO”',
+    articleCount: 'How many articles to show on the home page', officerName: 'Officer’s name', year: 'Year',
   };
   var HELP = {
     mapEmbedUrl: 'Google Maps → Share → Embed a map → Copy HTML, then paste here.',
@@ -63,19 +69,26 @@
   var RANGES = { baseFontSize: [14, 22, 1], headingScale: [0.8, 1.5, 0.05], radius: [0, 30, 1], buttonRadius: [0, 30, 1], containerWidth: [900, 1600, 10], sectionSpacing: [24, 120, 4],
     cardMinWidth: [180, 420, 10], doctorPhotoHeight: [140, 420, 10], slideshowHeight: [280, 800, 10], slideshowHeightMobile: [180, 520, 10], slideIntervalSeconds: [3, 15, 1], tableFontSize: [12, 20, 1], logoSize: [32, 96, 2] };
   var SELECTS = {
-    kind: [['news', 'News'], ['event', 'Event']], type: [['notice', 'Notice'], ['vacancy', 'Vacancy'], ['event', 'Event'], ['holiday', 'Holiday']],
+    kind: [['news', 'News'], ['event', 'Event']], type: [['notice', 'Notice'], ['vacancy', 'Vacancy']],
+    degreeLevel: [['MD', 'MD / MS (Rs 700)'], ['DM', 'DM / MCh (Rs 950)']],
+    category: [['success', 'Success story'], ['launch', 'New service'], ['news', 'News'], ['health', 'Health alert / epidemic'], ['director', 'Director’s article']],
     gender: [['', '—'], ['Male', 'Male'], ['Female', 'Female']], monthlyDay: [['', '—'], ['Sun', 'Sunday'], ['Mon', 'Monday'], ['Tue', 'Tuesday'], ['Wed', 'Wednesday'], ['Thu', 'Thursday'], ['Fri', 'Friday'], ['Sat', 'Saturday']],
     fontFamily: [['system', 'Clean (default)'], ['rounded', 'Rounded'], ['serif', 'Classic serif']],
     icon: ['emergency', 'stethoscope', 'heart', 'drop', 'lungs', 'bone', 'brain', 'female', 'ear', 'skin', 'mind', 'child', 'scalpel', 'kidney', 'scan', 'mask', 'star', 'bed', 'pill', 'clock', 'file', 'user'].map(function (x) { return [x, x]; }),
   };
-  var LONG = /^(body|message|description|summary|what|symptoms|prepare|treatment|recovery|urgent|bio|story|text|a|intro|mission|vision|privacy|portalIntro|conditionPrepare|conditionDisclaimer|instructions|note)$/;
-  var IMAGES = /^(image|photo|logo)$/;
+  var LONG = /^(intro|notFor|body|message|description|summary|what|symptoms|prepare|treatment|recovery|urgent|bio|story|text|a|intro|mission|vision|privacy|portalIntro|conditionPrepare|conditionDisclaimer|instructions|note)$/;
+  var IMAGES = /^(image|photo|logo|fonepayQr|esewaQr|pillarsImage)$/;
   var HIDE = { meta: 1, answeredQuestions: 1, notifyChannels: 1, source: 1, fromForm: 1 };
   var COLORS = /^(primary|primaryDark|accent|emergency|background|surface|text|mutedText)$/;
 
   var t = function (en, ne) { return { en: en || '', ne: ne || '' }; };
   var TEMPLATES = {
-    slides: function () { return { image: 'img/ph/P19.svg', photoNo: '', title: t('New slide'), text: t(), buttonText: t(), buttonLink: '#/book', visible: true }; },
+    slides: function () { return { image: 'img/ph/P19.svg', photoNo: '', eyebrow: t(), title: t('New slide'), tab: t(), text: t(), buttonText: t(), buttonLink: '#/book', seconds: 6, startDate: '', endDate: '', visible: true }; },
+    articles: function () { return { id: 'a' + Date.now().toString(36), category: 'news', date: new Date().toISOString().slice(0, 10), image: 'img/P01-building-wide.jpg', title: t('New article'), summary: t(), body: t(), author: t('NIKO Hospital'), showOnHome: true, visible: true }; },
+    gallery: function () { return { image: 'img/ph/P19.svg', caption: t(), visible: true }; },
+    pillars: function () { return { title: t('Reason'), text: t(), icon: 'star', visible: true }; },
+    packages: function () { return { id: 'pkg-' + Date.now().toString(36), name: t('New package'), price: '', forWhom: t(), tests: [], description: t(), visible: true }; },
+    tests: function () { return { id: 'test-' + Date.now().toString(36), category: 'Other', name: 'New test', price: '', sample: 'Blood', fasting: false, homeCollection: true, visible: true }; },
     stats: function () { return { value: '0', label: t('Label') }; },
     departments: function () { return { id: 'new-dept-' + Date.now().toString(36), name: t('New department'), icon: 'stethoscope', summary: t(), keywords: [], image: '' }; },
     doctors: function () { return { id: 'D' + Date.now().toString(36).slice(-4), name: t('Dr. '), title: t(), dept: '', degrees: '', nmc: '', affiliation: '', gender: '', languages: ['Nepali', 'English'], days: [], monthlyWeek: 0, monthlyDay: '', scheduleNote: t(), hours: '', photo: 'img/ph/P19.svg', focus: [], bio: t(), featured: false, visible: true, lockFromForm: false }; },
@@ -86,7 +99,7 @@
     news: function () { return { id: 'e' + Date.now().toString(36), kind: 'news', date: new Date().toISOString().slice(0, 10), image: 'img/ph/P18.svg', photoNo: '', title: t('New item'), summary: t(), body: t(), visible: true }; },
     stories: function () { return { title: t('Patient story'), patientName: '', condition: t(), dept: '', image: '', story: t(), date: new Date().toISOString().slice(0, 10), consent: false, visible: true }; },
     testimonials: function () { return { name: '', text: t(), rating: 5, source: 'Patient', date: '', visible: true }; },
-    accreditations: function () { return { name: t('New accreditation'), detail: t(), image: '', visible: true }; },
+    accreditations: function () { return { name: t('New award or recognition'), detail: t(), year: '', image: '', visible: true }; },
     faq: function () { return { q: t('Question?'), a: t(), visible: true }; },
   };
 
@@ -113,10 +126,18 @@
       ['faq', 'FAQ', '#/qa', ''],
       ['social', 'Social media', '#/contact', 'Paste your page links. Facebook and TikTok feeds show on the home and contact pages.'],
       ['booking', 'Booking settings', '#/book', ''],
+      ['articles', 'Articles (stories, news, health alerts)', '#/articles', 'Success stories, new services, news and your own articles. Choose “Show on the home page”, and set how many in Home page sections → Articles count.'],
+      ['gallery', 'Gallery', '#/gallery', 'Photos of the hospital and events.'],
+      ['pillars', 'Why NIKO (reasons)', '#/', 'The 4–5 reasons shown around a photo on the home page.'],
+      ['consult', 'Video consultation', '#/consult', 'Fees and text for video consultation. In Doctors, set each doctor’s degree level (MD/DM) and whether they take video consultations.'],
+      ['payments', 'Payment QR codes', '#/consult', 'Upload your Fonepay and eSewa QR codes. Used for video consultation and lab bookings.'],
+      ['lab', 'Lab tests', '#/lab', 'The list of lab tests and prices patients can book. The current list is a template — replace it with the hospital’s list.'],
+      ['packages', 'Health check-up packages', '#/packages', ''],
+      ['grievance', 'Grievance officer', '#/grievance', 'Information & Grievance Officer details shown on the complaint page.'],
       ['pages', 'Other page text', '#/privacy', ''],
       ['ui', 'Menu & button text', '#/', 'Change any built-in menu or button text. Leave empty to use the default (shown in grey).'],
     ]],
-    ['Inbox', [['bookings', 'Appointments', '#/book'], ['feedback', 'Feedback', '#/feedback'], ['questions', 'Questions', '#/qa']]],
+    ['Inbox', [['bookings', 'Appointments', '#/book'], ['feedback', 'Feedback', '#/feedback'], ['questions', 'Questions', '#/qa'], ['webaccounts', 'Website accounts & Director', null]]],
     ['Settings', [['integrations', 'Doctor form & Google', '#/doctors'], ['staffMail', 'Staff email', '#/staff-mail'], ['account', 'Account & users', null], ['history', 'Undo / history', null]]],
   ];
   function tabInfo(k) { var r; TABS.forEach(function (g) { g[1].forEach(function (x) { if (x[0] === k) r = x; }); }); return r; }
@@ -352,6 +373,21 @@
           '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="chk"><input type="checkbox" data-qp="' + q.id + '"' + (q.published ? ' checked' : '') + '> Publish on website</label><button class="btn sm" data-a="q-save" data-id="' + q.id + '">Save answer</button><button class="btn red sm" data-a="q-del" data-id="' + q.id + '">Delete</button></div></div>';
       }).join('') : '<p class="muted">No questions yet.</p>');
     },
+    webaccounts: function () {
+      if (A.demo) { $('#inboxBody').innerHTML = '<p class="muted">Available when running on the server.</p>'; return; }
+      Promise.all([req('GET', 'api/admin/accounts'), req('GET', 'api/admin/mail-status')]).then(function (r) {
+        var list = r[0], mail = r[1];
+        $('#inboxBody').innerHTML = '<div class="banner">Patients and staff create their own accounts on the website (Sign in → Create account). <b>To become the Director:</b> create your own account on the website first, then press “Make Director” next to it here. After that you can approve staff and give roles from your website dashboard.</div>' +
+          '<p class="small muted">Emails sent today: ' + mail.sentToday + ' / ' + mail.limit + ' · sending by: <b>' + esc(mail.via) + '</b>' + (mail.via === 'none' ? ' — set BREVO_API_KEY and MAIL_FROM on the server to send emails' : '') + '</p>' +
+          '<div class="tw"><table><thead><tr><th>Person</th><th>Type</th><th>Status</th><th>Roles</th><th></th></tr></thead><tbody>' + (list.length ? list.map(function (a) {
+            return '<tr><td><b>' + esc(a.profile.name || '—') + '</b><br><span class="small muted">' + esc(a.email) + '</span></td><td>' + esc(a.type === 'staff' ? a.staffRole : a.type || '—') + '</td><td>' + esc(a.status) + '</td><td>' + esc(a.roles.join(', ') || '—') + '</td>' +
+              '<td style="white-space:nowrap">' + (a.roles.indexOf('director') < 0 ? '<button class="btn ghost sm" data-a="acct-role" data-id="' + esc(a.id) + '" data-r="director">Make Director</button> ' : '<button class="btn ghost sm" data-a="acct-unrole" data-id="' + esc(a.id) + '" data-r="director">Remove Director</button> ') +
+              (a.roles.indexOf('owner') < 0 ? '<button class="btn ghost sm" data-a="acct-role" data-id="' + esc(a.id) + '" data-r="owner">Make Owner</button> ' : '<button class="btn ghost sm" data-a="acct-unrole" data-id="' + esc(a.id) + '" data-r="owner">Remove Owner</button> ') +
+              (a.status === 'pending' ? '<button class="btn sm" data-a="acct-status" data-id="' + esc(a.id) + '" data-s="active">Approve</button>' : '') + '</td></tr>';
+          }).join('') : '<tr><td colspan="5" class="muted">No accounts yet.</td></tr>') + '</tbody></table></div>';
+        A.webaccounts = list;
+      }).catch(function (e) { $('#inboxBody').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
+    },
     account: function () {
       if (A.demo) { $('#inboxBody').innerHTML = '<p class="muted">Available when running on the server.</p>'; return; }
       req('GET', 'api/admin/users').then(function (users) {
@@ -477,6 +513,11 @@
       case 'fb-del': if (confirm('Delete this feedback?')) req('DELETE', 'api/admin/feedback/' + el.getAttribute('data-id')).then(loadInbox); break;
       case 'q-save': var id = el.getAttribute('data-id'); req('PATCH', 'api/admin/questions/' + id, { question: $('[data-qq="' + id + '"]').value, answer: $('[data-qa="' + id + '"]').value, published: $('[data-qp="' + id + '"]').checked }).then(function () { toast('Saved — live on the website'); loadInbox(); }); break;
       case 'q-del': if (confirm('Delete this question?')) req('DELETE', 'api/admin/questions/' + el.getAttribute('data-id')).then(loadInbox); break;
+      case 'acct-role': case 'acct-unrole':
+        var acx = (A.webaccounts || []).find(function (x) { return x.id === el.getAttribute('data-id'); }); if (!acx) break;
+        var roles = acx.roles.filter(function (r) { return r !== el.getAttribute('data-r'); }); if (a === 'acct-role') roles.push(el.getAttribute('data-r'));
+        req('PATCH', 'api/admin/accounts/' + acx.id, a === 'acct-role' ? { roles: roles, status: 'active' } : { roles: roles }).then(function () { toast('Saved'); INBOX.webaccounts(); }).catch(function (e) { toast(e.message); }); break;
+      case 'acct-status': req('PATCH', 'api/admin/accounts/' + el.getAttribute('data-id'), { status: el.getAttribute('data-s') }).then(function () { toast('Saved'); INBOX.webaccounts(); }); break;
       case 'user-del': if (confirm('Remove ' + el.getAttribute('data-n') + '?')) req('DELETE', 'api/admin/users/' + encodeURIComponent(el.getAttribute('data-n'))).then(function () { INBOX.account(); }); break;
       case 'restore': if (confirm('Replace the current website content with this version?')) req('POST', 'api/admin/history/' + encodeURIComponent(el.getAttribute('data-f')) + '/restore').then(function () { toast('Restored'); return req('GET', 'api/admin/content'); }).then(function (c) { A.content = normalize(c); A.saved = JSON.stringify(A.content); status(); sendPreview(); }); break;
     }
