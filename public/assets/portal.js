@@ -46,6 +46,7 @@
     var tmp = document.createElement('div'); tmp.innerHTML = N.shell();
     ['#acctSlot', '.sidetab', '.mbar', '#drawer .panel'].forEach(function (s) { var a = $(s), b = $(s, tmp); if (a && b) a.innerHTML = b.innerHTML; });
     var m1 = $('.hdr [data-act=menu]'), m2 = $('.hdr [data-act=menu]', tmp); if (m1 && m2) m1.innerHTML = m2.innerHTML;
+    if (N.fitLayout) N.fitLayout();
   }
   setInterval(function () { if (P.me && document.visibilityState === 'visible') fetchMe(); }, 60000);
 
@@ -405,7 +406,7 @@
       var docs = N.doctors();
       var shown = list.filter(function (a) { return (!f.type || a.type === f.type || (f.type === 'pending' && a.status === 'pending')) && (!f.q || (a.email + ' ' + (a.profile.name || '')).toLowerCase().indexOf(f.q.toLowerCase()) >= 0); });
       D('<h2 style="font-size:1.3rem">' + esc(t('People & access', 'व्यक्ति तथा पहुँच')) + '</h2><p class="muted small">' + esc(t('Give roles: Owner (sees everything, checks payments), Payment checker, or another Director. For OPD, choose which doctors’ OPD cards a person may open.', 'भूमिका र ओपीडी पहुँच दिनुहोस् ।')) + '</p>' +
-        '<div class="filters" style="grid-template-columns:2fr 1fr"><input type="search" data-pf="q" placeholder="' + esc(t('Search', 'खोज्नुहोस्')) + '" value="' + esc(f.q) + '"><select data-pf="type">' + opt('staff', t('Staff', 'कर्मचारी'), f.type) + opt('patient', t('Patients', 'बिरामी'), f.type) + opt('pending', t('Waiting approval', 'स्वीकृति बाँकी'), f.type) + opt('', t('Everyone', 'सबै'), f.type) + '</select></div>' +
+        '<div class="filters" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)"><input type="search" data-pf="q" placeholder="' + esc(t('Search', 'खोज्नुहोस्')) + '" value="' + esc(f.q) + '"><select data-pf="type">' + opt('staff', t('Staff', 'कर्मचारी'), f.type) + opt('patient', t('Patients', 'बिरामी'), f.type) + opt('pending', t('Waiting approval', 'स्वीकृति बाँकी'), f.type) + opt('', t('Everyone', 'सबै'), f.type) + '</select></div>' +
         '<div class="list">' + shown.slice(0, 200).map(function (a) {
           var isDoc = a.staffRole === 'doctor', d = isDoc ? docs.find(function (x) { return x.id === a.doctorId; }) : null;
           return '<details class="item"><summary style="cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>' + esc(a.profile.name || a.email) + '</b> <span class="small muted">' + esc(a.email) + '</span> ' + status(a.status) + ' <span class="tag">' + esc(a.type === 'staff' ? roleName(a.staffRole) : a.type || '—') + '</span>' + a.roles.map(function (r) { return ' <span class="tag orange">' + esc(r) + '</span>'; }).join('') + '</summary>' +
@@ -583,7 +584,7 @@
     var sel = P.lab.sel, chosen = tests.filter(function (x) { return sel[x.id]; });
     var total = chosen.reduce(function (s, x) { return s + (+x.price || 0); }, 0), allPriced = chosen.every(function (x) { return +x.price > 0; });
     var fee = +lab.homeCollectionFee || 0;
-    return head(T('labTests'), L(lab.intro), T('labTests')) + '<section class="section"><div class="container"><div class="split" style="align-items:start;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">' +
+    return head(T('labTests'), L(lab.intro), T('labTests')) + '<section class="section"><div class="container"><div class="split lab-split">' +
       '<div><div class="home-search" style="margin-bottom:16px">' + icon('search', ' width="18" height="18" style="color:var(--muted);flex:none"') + '<input type="search" id="labQ" placeholder="' + esc(t('Search a test (e.g. sugar, thyroid, CBC)', 'जाँच खोज्नुहोस्')) + '" value="' + esc(P.lab.q || '') + '"></div>' +
       (L(lab.note) ? '<p class="small muted">' + esc(L(lab.note)) + '</p>' : '') +
       cats.map(function (c) { return '<div class="lab-cat" style="margin-bottom:18px"><h3>' + esc(c) + '</h3><div class="testlist">' + tests.filter(function (x) { return x.category === c; }).map(function (x) {
@@ -592,7 +593,8 @@
       '<aside class="cart"><div class="card" id="labCart"><h2 style="font-size:1.2rem">' + esc(t('Your tests', 'तपाईंका जाँच')) + ' (' + chosen.length + ')</h2>' +
       (chosen.length ? '<ul style="padding-left:18px;margin:0 0 10px">' + chosen.map(function (x) { return '<li>' + esc(x.name) + (+x.price ? ' — Rs ' + esc(x.price) : '') + '</li>'; }).join('') + '</ul>' + (fee ? '<p class="small" style="margin:0">' + esc(t('Home collection', 'घरमै संकलन')) + ': Rs ' + fee + '</p>' : '') +
         '<p style="margin:6px 0 12px"><b>' + esc(t('Total', 'जम्मा')) + ':</b> <span class="amount" style="font-size:1.2rem">' + (allPriced ? 'Rs ' + (total + fee) : esc(t('confirmed by the lab', 'ल्याबले पुष्टि गर्छ'))) + '</span></p>' : '<p class="muted small">' + esc(t('Tick the tests you need.', 'चाहिने जाँचमा टिक लगाउनुहोस् ।')) + '</p>') +
-      (chosen.length ? labForm(allPriced ? total + fee : null) : '') + '</div><p class="small muted" style="margin-top:10px">' + esc(t('You can also come to the lab any time — it is open 24 hours.', 'ल्याब २४ घण्टा खुला छ ।')) + '</p></aside></div></div></section>';
+      (chosen.length ? labForm(allPriced ? total + fee : null) : '') + '</div><p class="small muted" style="margin-top:10px">' + esc(t('You can also come to the lab any time — it is open 24 hours.', 'ल्याब २४ घण्टा खुला छ ।')) + '</p></aside></div></div></section>' +
+      (chosen.length ? '<button type="button" class="lab-float" data-pact="lab-cart">' + esc(t('Your tests', 'तपाईंका जाँच')) + ' (' + chosen.length + ')' + (allPriced ? ' · Rs ' + (total + fee) : '') + ' — ' + esc(t('Book', 'बुक')) + ' ↓</button>' : '');
   };
   function labForm(amount) {
     var gate = needPatient('#/lab'); if (gate) return gate;
@@ -687,6 +689,7 @@
     var a = el.getAttribute('data-pact'), id = el.getAttribute('data-id');
     function done(m) { toast(m || t('Saved', 'सेभ भयो')); reload(); }
     function err(x) { toast(x.message); }
+    if (a === 'lab-cart') { var lc = $('#labCart'); if (lc) lc.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     switch (a) {
       case 'auth-mode': P.auth.mode = el.getAttribute('data-m'); P.auth.touched = true; $('#authBox').innerHTML = authHTML(); var i1 = $('#authBox input'); if (i1) i1.focus(); break;
       case 'logout': api('POST', 'api/acct/logout', {}).then(function () { P.me = null; window.NIKO_ACCT = null; location.hash = '#/'; N.renderAll(); }); break;

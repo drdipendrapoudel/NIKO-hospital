@@ -115,6 +115,7 @@
     document.documentElement.classList.toggle('hc', st.hc);
     document.documentElement.lang = lang === 'ne' ? 'ne' : 'en';
     var meta = $('meta[name=theme-color]'); if (meta) meta.content = t.primary || '#1f487c';
+    if ($('.hdr')) fitLayout();
   }
 
   // ---------------------------------------------------------------- loading
@@ -366,7 +367,7 @@
           '<a class="btn glass" href="' + second[0] + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(second[1]) + '</a></div></div></div></div>';
       }).join('') + (slides.length > 1 ? '<div class="tabs-row"><div class="container">' + slides.map(function (s, i) {
         return '<button class="htab" data-act="slide-go" data-i="' + i + '" aria-current="' + (i === cur) + '" style="--dur:' + slideSecs(s) + 's"><small>' + esc(L(s.eyebrow) || ('0' + (i + 1))) + '</small><b>' + esc(L(s.tab) || L(s.title)) + '</b><span class="bar"><i></i></span></button>';
-      }).join('') + '</div></div><button class="pause" data-act="slide-pause" aria-label="' + (st.slidePaused ? 'Play slideshow' : 'Pause slideshow') + '">' + (st.slidePaused ? '▶' : '❚❚') + '</button>' : '') + '</section>';
+      }).join('') + '</div></div><button class="pause" data-act="slide-pause" aria-label="' + (st.slidePaused ? 'Play slideshow' : 'Pause slideshow') + '">' + (st.slidePaused ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>') + '</button>' : '') + '</section>';
     },
     quickActions: function () {
       var h = C.hospital;
@@ -766,7 +767,7 @@
       '<label class="f">' + esc(T('patientName')) + ' <span class="muted small">(' + esc(T('required')) + ')</span><input name="name" required autocomplete="name"></label>' +
       '<label class="f">' + esc(T('phone')) + ' <span class="muted small">(' + esc(T('required')) + ')</span><input name="phone" type="tel" inputmode="tel" required autocomplete="tel" placeholder="98XXXXXXXX"></label>' +
       (b.askEmail !== false ? '<label class="f">' + esc(T('email')) + '<input name="email" type="email" autocomplete="email"></label>' : '') +
-      (b.askAge !== false ? '<div class="filters" style="grid-template-columns:1fr 1fr;margin:0"><label class="f">' + esc(T('age')) + '<input name="age" inputmode="numeric" maxlength="3"></label>' + sel('gender', T('gender'), [['', '—'], ['Male', lang === 'ne' ? 'पुरुष' : 'Male'], ['Female', lang === 'ne' ? 'महिला' : 'Female'], ['Other', lang === 'ne' ? 'अन्य' : 'Other']], '') + '</div>' : '') +
+      (b.askAge !== false ? '<div class="filters" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin:0"><label class="f">' + esc(T('age')) + '<input name="age" inputmode="numeric" maxlength="3"></label>' + sel('gender', T('gender'), [['', '—'], ['Male', lang === 'ne' ? 'पुरुष' : 'Male'], ['Female', lang === 'ne' ? 'महिला' : 'Female'], ['Other', lang === 'ne' ? 'अन्य' : 'Other']], '') + '</div>' : '') +
       '<label class="f">' + esc(T('reason')) + '<textarea name="reason" style="min-height:80px"></textarea></label>' +
       '<fieldset style="border:0;padding:0;margin:0"><legend style="font-weight:600;font-size:.9rem;margin-bottom:6px">' + esc(T('notifyMe')) + '</legend><div style="display:flex;gap:16px;flex-wrap:wrap">' +
       [['sms', T('sms')], ['whatsapp', T('whatsapp')], ['email', 'Email']].map(function (x) { return '<label class="check"><input type="checkbox" name="notify" value="' + x[0] + '"' + (x[0] !== 'email' ? ' checked' : '') + '>' + esc(x[1]) + '</label>'; }).join('') + '</div></fieldset>' +
@@ -890,7 +891,42 @@
     if ($('.tiktok-embed') && !st.preview) loadTikTok();
     var an = $('#announce'); if (an && h1) an.textContent = h1.textContent;
     (window.NIKO_SITE && NIKO_SITE.afterRender || []).forEach(function (f) { try { f(r); } catch (e) { console.error(e); } });
+    fitLayout();
   }
+
+  // ------------------------------------------------- layout fitting (no overlaps)
+  // The header menu and the hero text change width/height with the language, the A−/A+ text size
+  // and the browser. Measure them and step down to a more compact layout until nothing collides.
+  function fitHeader() {
+    var hdr = $('.hdr'), nav = hdr && $('.nav', hdr), box = hdr && $('.container', hdr);
+    if (!nav) return;
+    hdr.classList.remove('fit1', 'fit2', 'fit3');
+    if (getComputedStyle(nav).display === 'none') return;
+    // keep at least 16px between the last menu item and the Search button
+    function over() {
+      var last = nav.lastElementChild, used = last ? last.getBoundingClientRect().right - nav.getBoundingClientRect().left : 0;
+      return used + 16 > nav.clientWidth || nav.scrollWidth > nav.clientWidth + 1 || box.scrollWidth > box.clientWidth + 1;
+    }
+    ['fit1', 'fit2', 'fit3'].forEach(function (c) { if (over()) hdr.classList.add(c); });
+  }
+  function fitHero() {
+    var hero = $('.hero'); if (!hero) return;
+    hero.style.height = '';
+    var base = hero.offsetHeight, tabs = $('.tabs-row', hero);
+    var space = tabs ? base - tabs.offsetTop + 14 : 20;
+    hero.style.setProperty('--tabs-space', space + 'px');
+    var need = 0;
+    $$('.slide .cap', hero).forEach(function (c) {
+      var inner = c.firstElementChild; if (!inner) return;
+      need = Math.max(need, inner.offsetHeight + (parseFloat(getComputedStyle(c).paddingTop) || 0) + space + (innerWidth >= 900 ? 48 : 16));
+    });
+    if (need > base) hero.style.height = Math.ceil(need) + 'px';
+  }
+  function fitLayout() { try { fitHeader(); fitHero(); } catch (e) { console.error(e); } }
+  var fitRaf = 0;
+  window.addEventListener('resize', function () { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitLayout); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitLayout);
+  window.addEventListener('load', fitLayout);
   function maybePopup() {
     if (st.preview || st.popupShown || C.home.importantNoticePopup === false || sstore('popup') === '1') return;
     var n = vis(C.notices).filter(noticeLive).find(function (x) { return x.important; }); if (!n) return;
@@ -921,7 +957,7 @@
       case 'totop': window.scrollTo({ top: 0, behavior: 'smooth' }); break;
       case 'lightbox': var lb = document.createElement('div'); lb.className = 'lightbox'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.innerHTML = '<img src="' + esc(el.getAttribute('data-src')) + '" alt="' + esc(el.getAttribute('data-cap')) + '"><div>' + esc(el.getAttribute('data-cap')) + '</div><button class="btn light sm" data-act="lb-close">' + esc(T('close')) + '</button>'; document.body.appendChild(lb); $('button', lb).focus(); break;
       case 'lb-close': el.closest('.lightbox').remove(); break;
-      case 'slide-pause': st.slidePaused = !st.slidePaused; el.textContent = st.slidePaused ? '▶' : '❚❚'; el.setAttribute('aria-label', st.slidePaused ? 'Play slideshow' : 'Pause slideshow'); if (st.slidePaused) clearTimeout(st.slideTimer); else startSlides(); break;
+      case 'slide-pause': st.slidePaused = !st.slidePaused; el.innerHTML = st.slidePaused ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'; el.setAttribute('aria-label', st.slidePaused ? 'Play slideshow' : 'Pause slideshow'); if (st.slidePaused) clearTimeout(st.slideTimer); else startSlides(); break;
       case 'pop-close': sstore('popup', '1'); el.closest('.modal').remove(); break;
       case 'ntab': st.noticeTab = el.getAttribute('data-t'); $$('.tabs button').forEach(function (b) { b.setAttribute('aria-pressed', b === el); }); $('#noticeList').innerHTML = noticeList(); break;
       case 'jump': e.preventDefault(); var t = document.getElementById(el.getAttribute('data-target')); if (t) t.scrollIntoView({ behavior: 'smooth' }); break;
@@ -1011,7 +1047,7 @@
     get C() { return C; }, get lang() { return lang; }, st: st, S: S,
     T: T, L: L, esc: esc, icon: icon, img: img, head: head, secHead: secHead, gradTitle: gradTitle, fmtDate: fmtDate, today: today, vis: vis, tel: tel, waNum: waNum,
     doctors: doctors, docById: docById, deptOf: deptOf, photoOf: photoOf, scheduleOf: scheduleOf, truncate: truncate, sel: sel, notFound: notFound,
-    renderAll: renderAll, renderPage: renderPage, shell: shell, parseHash: parseHash, acctButton: acctButton, $: $, $$: $$,
+    renderAll: renderAll, renderPage: renderPage, shell: shell, fitLayout: fitLayout, parseHash: parseHash, acctButton: acctButton, $: $, $$: $$,
   };
 
   // ------------------------------------------------------------------ start

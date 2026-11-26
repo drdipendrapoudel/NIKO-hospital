@@ -249,6 +249,9 @@
     .exam-row textarea { grid-column: 1 / -1; grid-row: 2; }
   }
   @media print { #loginGate, #opdToast { display: none !important; } }
+/* small phones: inputs in a row may shrink so buttons stay on screen */
+input,select,textarea{min-width:0;max-width:100%}
+@media (max-width:520px){ .exam-add-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important} .exam-add-row>*:nth-child(n+3){grid-column:1/-1} }
 </style>
 </head>
 <body>
@@ -545,7 +548,7 @@
               <div class="picckle-chips" id="picckleButtonsContainer"></div>
             </div>
             <div id="examRowsContainer"></div>
-            <div style="display:grid; grid-template-columns: 110px 140px 1fr auto; gap:6px; margin-top:8px; align-items:start;">
+            <div class="exam-add-row" style="display:grid; grid-template-columns: 110px 140px 1fr auto; gap:6px; margin-top:8px; align-items:start;">
               <select id="custom_exam_cat"><option value="Systemic">Systemic</option><option value="General">General</option><option value="Local">Local</option></select>
               <input type="text" id="custom_exam_label" placeholder="Label (e.g. Chest)">
               <textarea id="custom_exam_val" rows="1" class="auto-grow" placeholder="Finding (e.g. B/L EAE, NVBS)" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addCustomExamRowToPatient();}"></textarea>
