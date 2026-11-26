@@ -498,20 +498,66 @@ const facilities = [
 ];
 
 // ------------------------------------------------------------ lab tests
-// TEMPLATE list: the hospital will send the real list and prices. Empty price = “ask at the lab”.
-const LAB_TESTS = [
-  ['Haematology', ['Complete Blood Count (CBC)', 'Haemoglobin (Hb)', 'ESR', 'Platelet count', 'Blood group & Rh type', 'PT / INR', 'Peripheral blood smear']],
-  ['Diabetes', ['Fasting blood sugar (FBS)', 'Post-prandial blood sugar (PP)', 'Random blood sugar (RBS)', 'HbA1c']],
-  ['Kidney & liver', ['Renal function test (Urea, Creatinine, Electrolytes)', 'Liver function test (LFT)', 'Uric acid', 'Serum calcium']],
-  ['Heart & cholesterol', ['Lipid profile', 'Troponin I', 'CK-MB']],
-  ['Thyroid & hormones', ['Thyroid function test (T3, T4, TSH)', 'TSH', 'Urine pregnancy test (UPT)']],
-  ['Infection & serology', ['C-reactive protein (CRP)', 'Widal test', 'Typhidot', 'Dengue NS1 antigen', 'Dengue IgM / IgG', 'HBsAg', 'Anti-HCV', 'HIV I & II', 'VDRL', 'RA factor', 'ASO titre', 'Malaria antigen']],
-  ['Urine & stool', ['Urine routine examination', 'Urine culture & sensitivity', 'Stool routine examination', 'Stool occult blood']],
-  ['Vitamins', ['Vitamin D (25-OH)', 'Vitamin B12']],
-].flatMap(([category, names]) => names.map((name) => ({
-  id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40),
-  category, name, price: '', sample: /urine|stool/i.test(name) ? (/stool/i.test(name) ? 'Stool' : 'Urine') : 'Blood', fasting: /fasting|lipid/i.test(name), homeCollection: true, visible: true,
-})));
+// NIKO pathology rate list (Niko_rate.docx, received 25 Nov 2026; approved by the Director 26 Nov 2026).
+// Rows: [name, price (Rs), options]. options: s = sample (default Blood), f = fasting needed, inc = tests in a panel, k = extra search words.
+const LAB_LIST = [
+  ['Haematology', [
+    ['CBC (Complete Blood Count) — full panel', 400, { inc: 'Hb, total & differential leucocyte count, platelets and more', k: 'cbc blood count' }],
+    ['Haemoglobin (Hb)', 50, { k: 'hemoglobin' }], ['Total Leucocyte Count (TLC)', 150, { k: 'wbc' }], ['Platelet count', 200],
+    ['ESR', 50], ['Blood grouping', 50, { k: 'blood group rh' }], ['Bleeding Time (BT)', 50], ['Clotting Time (CT)', 50],
+    ['PT / INR', 500, { k: 'prothrombin' }], ['APTT', 600]]],
+  ['Renal Function Test (RFT)', [
+    ['RFT — full panel', 950, { inc: 'Urea, creatinine, sodium, potassium, uric acid, urine R/E', k: 'kidney rft' }],
+    ['Urea', 150, { k: 'kidney' }], ['Creatinine', 250, { k: 'kidney' }], ['Sodium (Na)', 300, { k: 'electrolyte' }], ['Potassium (K)', 300, { k: 'electrolyte' }],
+    ['Uric acid', 150, { k: 'gout' }]]],
+  ['Liver Function Test (LFT)', [
+    ['LFT — full panel', 900, { inc: 'Bilirubin total/direct, SGOT, SGPT, alkaline phosphatase, total protein, albumin', k: 'liver lft' }],
+    ['Bilirubin (total / direct)', 150, { k: 'jaundice liver' }], ['SGOT (AST)', 250, { k: 'liver' }], ['SGPT (ALT)', 250, { k: 'liver' }],
+    ['Alkaline phosphatase (ALP)', 250, { k: 'liver' }], ['Serum total protein', 200], ['Serum albumin', 200]]],
+  ['Lipid Profile', [
+    ['Lipid profile — full panel', 800, { f: 1, inc: 'Total cholesterol, triglyceride, HDL', k: 'cholesterol heart' }],
+    ['Total cholesterol', 250, { f: 1 }], ['Triglyceride', 300, { f: 1 }], ['HDL cholesterol', 300, { f: 1 }]]],
+  ['Diabetes & other biochemistry', [
+    ['Blood sugar — fasting (FBS)', 50, { f: 1, k: 'sugar diabetes glucose' }], ['Blood sugar — post-prandial (PP)', 50, { k: 'sugar diabetes glucose' }],
+    ['HbA1c', 1000, { k: 'sugar diabetes' }], ['Urine micro-albumin', 1000, { s: 'Urine', k: 'kidney diabetes' }], ['Insulin', 1800, { f: 1 }], ['C-Peptide', 2200],
+    ['Lipase', 800, { k: 'pancreas' }], ['Amylase', 400, { k: 'pancreas' }], ['LDH', 800]]],
+  ['Serology & infection', [
+    ['RA factor', 250, { k: 'arthritis' }], ['Dengue', 600], ['Typhoid', 600, { k: 'widal typhidot' }], ['C-Reactive Protein (CRP)', 800],
+    ['Anti-Streptolysin O (ASO)', 200], ['HIV', 500], ['HBsAg (Hepatitis B)', 350, { k: 'hepatitis' }], ['HCV (Hepatitis C)', 500, { k: 'hepatitis' }],
+    ['VDRL', 250, { k: 'syphilis' }], ['Malaria parasite (MP)', 200], ['TORCH (IgG / IgM)', 5000, { k: 'pregnancy' }]]],
+  ['Urine & stool', [
+    ['Urine routine examination (R/E)', 50, { s: 'Urine' }], ['Urine for acetone (ketone bodies)', 150, { s: 'Urine' }], ['Stool routine examination (R/E)', 100, { s: 'Stool' }]]],
+  ['Thyroid Function Test (TFT)', [
+    ['TFT — full panel', 1200, { inc: 'T3, T4, TSH', k: 'thyroid' }],
+    ['T3', 400, { k: 'thyroid' }], ['T4', 400, { k: 'thyroid' }], ['TSH', 500, { k: 'thyroid' }], ['Thyroglobulin', 3400, { k: 'thyroid' }],
+    ['Anti-Thyroglobulin (Anti-Tg)', 3000, { k: 'thyroid' }], ['Anti-TPO', 2200, { k: 'thyroid' }]]],
+  ['Fertility & hormones', [
+    ['Estrogen', 1800], ['Progesterone', 1800], ['LH', 1800], ['FSH', 1800], ['Prolactin', 1800], ['HCG', 1800, { k: 'pregnancy' }], ['AMH', 4500, { k: 'fertility' }]]],
+  ['Arthritis & autoimmune', [
+    ['Ds-DNA', 3500, { k: 'anti ds dna lupus' }], ['ANA', 2000, { k: 'lupus' }], ['Anti-CCP', 2400, { k: 'arthritis' }], ['HLA-B27', 5200, { k: 'arthritis back' }]]],
+  ['Cardiac Function Test', [
+    ['CK-MB', 1000, { k: 'heart' }], ['Troponin-I', 1000, { k: 'heart attack' }], ['CPK-NAC', 1200, { k: 'heart muscle' }], ['Digoxin level', 2500, { k: 'heart' }], ['Myoglobin', 1600, { k: 'heart' }]]],
+  ['Vitamins', [['Vitamin B12', 2400], ['Vitamin D (25-OH)', 2800]]],
+  ['Iron Profile', [
+    ['Iron profile — full panel', 3100, { inc: 'Ferritin, TIBC, serum iron', k: 'anaemia anemia' }],
+    ['Ferritin', 1800, { k: 'anaemia anemia' }], ['TIBC', 800, { k: 'anaemia anemia' }], ['Serum iron', 500, { k: 'anaemia anemia' }]]],
+  ['Tumour markers', [
+    ['CEA', 2000, { k: 'cancer' }], ['CA-125', 2000, { k: 'cancer ovary' }], ['AFP', 2200, { k: 'cancer liver' }], ['PSA', 1800, { k: 'cancer prostate' }],
+    ['Beta HCG', 1800, { k: 'cancer pregnancy' }], ['CA 15-3', 2000, { k: 'cancer breast' }], ['CA 19-9', 2000, { k: 'cancer pancreas' }],
+    ['LBC / Pap smear', 2200, { s: 'Cervical smear (at the hospital)', k: 'cancer cervix' }]]],
+  ['Microbiology', [
+    ['Urine culture', 450, { s: 'Urine' }], ['Stool culture', 500, { s: 'Stool' }], ['Blood culture', 700], ['Swab / pus culture', 500, { s: 'Swab / pus' }],
+    ['H. pylori antigen', 800, { s: 'Stool', k: 'gastritis ulcer' }], ['Mantoux test', 500, { s: 'Skin test (at the hospital)', k: 'tb tuberculosis' }],
+    ['KOH preparation', 250, { s: 'Skin / nail scraping', k: 'fungus' }], ['Gram stain', 250, { s: 'Swab / sample' }], ['TPHA IgG', 2000, { k: 'syphilis' }], ['Scrub typhus', 1500]]],
+];
+const LAB_TESTS = [];
+LAB_LIST.forEach(([category, rows]) => rows.forEach(([name, price, o = {}]) => {
+  let id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+  while (LAB_TESTS.some((x) => x.id === id)) id += '-2';
+  const sample = o.s || 'Blood';
+  LAB_TESTS.push({ id, category, name, price: String(price), sample, fasting: !!o.f, includes: o.inc || '', keywords: o.k || '',
+    homeCollection: !/at the hospital/i.test(sample), visible: true });
+}));
 
 // --------------------------------------------------------------------- export
 module.exports = {
@@ -773,7 +819,7 @@ module.exports = {
     homeCollection: true,
     homeCollectionFee: 0,
     collectionSlots: ['7:00–9:00 am', '9:00–11:00 am', '11:00 am–1:00 pm', '2:00–4:00 pm'],
-    note: t('Template list — the hospital will replace it with the full test list and prices.', ''),
+    note: t('Prices are in Nepali rupees. A full-panel price covers every test listed in that panel. Pap smear and Mantoux tests are done at the hospital.', 'मूल्य नेपाली रुपैयाँमा । प्यानलको मूल्यमा त्यस प्यानलका सबै जाँच समावेश छन् ।'),
     tests: LAB_TESTS,
   },
 

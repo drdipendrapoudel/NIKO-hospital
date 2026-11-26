@@ -69,6 +69,15 @@ if (!content) { content = JSON.parse(JSON.stringify(DEFAULT_CONTENT)); content.m
     secs.forEach((s) => { if (s.id === 'news' || s.id === 'stories') s.visible = false; });
     m.designVersion = 2; changed = true;
   }
+  // Lab rate list from the hospital (approved 26 Nov 2026) replaces the 39-test template, unless prices were already entered by hand.
+  if (!(Number(m.labListVersion) >= 2)) {
+    const cur = Array.isArray(content.lab.tests) ? content.lab.tests : [];
+    if (!cur.some((x) => Number(x.price) > 0)) {
+      content.lab.tests = JSON.parse(JSON.stringify(DEFAULT_CONTENT.lab.tests));
+      content.lab.note = JSON.parse(JSON.stringify(DEFAULT_CONTENT.lab.note));
+    }
+    m.labListVersion = 2; changed = true;
+  }
   if (changed) store.write('content', content);
 }());
 
