@@ -347,6 +347,7 @@
         '<p style="margin:0"><b>' + esc(L(d.name)) + '</b> · NMC ' + esc(d.nmc || '—') + '</p>' + bi('title', t('Title (e.g. Consultant Physician)', 'पद')) +
         '<div class="two"><label class="f">' + esc(t('Qualifications / degrees', 'योग्यता')) + '<input name="degrees" value="' + esc(v.degrees || '') + '" placeholder="MBBS, MD (Internal Medicine)"></label><label class="f">NMC No.<input name="nmc" value="' + esc(v.nmc || '') + '"></label></div>' +
         '<div class="two"><label class="f">' + esc(t('Also works at', 'अन्य संस्था')) + '<input name="affiliation" value="' + esc(v.affiliation || '') + '"></label><label class="f">' + esc(t('Gender', 'लिङ्ग')) + '<select name="gender">' + opt('', '—', v.gender) + opt('Male', 'Male', v.gender) + opt('Female', 'Female', v.gender) + '</select></label></div>' +
+        '<label class="f">' + esc(t('Your own website (optional)', 'आफ्नो वेबसाइट (ऐच्छिक)')) + '<input name="website" inputmode="url" placeholder="drname.com.np" value="' + esc(v.website || '') + '"></label>' +
         '<div class="two"><label class="f">' + esc(t('Languages (comma separated)', 'भाषा')) + '<input name="languages" value="' + esc((v.languages || []).join(', ')) + '"></label><label class="f">' + esc(t('OPD hours (e.g. 09:00-13:00, 15:00-17:00)', 'ओपीडी समय')) + '<input name="hours" value="' + esc(v.hours || '') + '"></label></div>' +
         '<label class="f">' + esc(t('Clinical focus (one per line)', 'विशेषता (प्रति लाइन एक)')) + '<textarea name="focus">' + esc((v.focus || []).join('\n')) + '</textarea></label>' + bi('bio', t('About you', 'परिचय'), true) + bi('scheduleNote', t('Schedule text shown to patients', 'तालिका'), false) +
         '<button class="btn" type="submit">' + esc(t('Send for approval', 'स्वीकृतिका लागि पठाउनुहोस्')) + '</button><div class="msg"></div></form>');
@@ -882,7 +883,7 @@
     }).catch(fail);
     else if (kind === 'changepw') api('POST', 'api/acct/change-password', data).then(function () { f.reset(); ok(t('Password changed', 'पासवर्ड बदलियो')); }).catch(fail);
     else if (kind === 'docprofile') {
-      var b = { title: { en: data.title_en, ne: data.title_ne }, bio: { en: data.bio_en, ne: data.bio_ne }, scheduleNote: { en: data.scheduleNote_en, ne: data.scheduleNote_ne }, degrees: data.degrees, nmc: data.nmc, affiliation: data.affiliation, gender: data.gender, languages: data.languages, focus: data.focus, hours: data.hours, photo: data.photo };
+      var b = { title: { en: data.title_en, ne: data.title_ne }, bio: { en: data.bio_en, ne: data.bio_ne }, scheduleNote: { en: data.scheduleNote_en, ne: data.scheduleNote_ne }, degrees: data.degrees, nmc: data.nmc, affiliation: data.affiliation, website: data.website, gender: data.gender, languages: data.languages, focus: data.focus, hours: data.hours, photo: data.photo };
       api('POST', 'api/p/doctor-profile', b).then(function () { toast(t('Sent to the Director for approval', 'स्वीकृतिका लागि पठाइयो')); reload(); }).catch(fail);
     } else if (kind === 'send') {
       var body = { kind: data.kind, title: data.title, body: data.body, link: data.link, allStaff: !!data.allStaff, staff: [].concat(data.staff || []), users: P.sendTo.map(function (p) { return p.id; }) };

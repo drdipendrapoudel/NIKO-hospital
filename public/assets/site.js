@@ -18,6 +18,8 @@
   function store(k, v) { try { if (v === undefined) return localStorage.getItem('niko_' + k); localStorage.setItem('niko_' + k, v); } catch (e) { return null; } }
   function sstore(k, v) { try { if (v === undefined) return sessionStorage.getItem('niko_' + k); sessionStorage.setItem('niko_' + k, v); } catch (e) { return null; } }
   function vis(list) { return (list || []).filter(function (x) { return x && x.visible !== false; }); }
+  // a doctor's own website: plain domain or http(s) address only
+  function webUrl(w) { w = String(w || '').trim(); if (!w) return ''; if (!/^https?:\/\//i.test(w)) w = 'https://' + w; return /^https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/[^\s"'<>]*)?$/i.test(w) ? w : ''; }
   function tel(n) { return 'tel:' + String(n || '').replace(/[^\d+]/g, ''); }
   function waNum(n) { var d = String(n || '').replace(/\D/g, ''); return d.length === 10 ? '977' + d : d; }
   function img(src, alt, cls, eager) { return src ? '<img src="' + esc(src) + '" alt="' + esc(alt || '') + '"' + (cls ? ' class="' + cls + '"' : '') + (eager ? ' fetchpriority="high"' : ' loading="lazy" decoding="async"') + '>' : ''; }
@@ -592,11 +594,12 @@
       var visit = isVisiting(d);
       return head(L(d.name), L(d.title), '<a href="#/doctors">' + esc(T('doctors')) + '</a>') + '<section class="section"><div class="container profile"><div><div class="portrait">' + img(photoOf(d), L(d.name)) + '</div>' +
         '<p style="margin-top:14px"><a class="btn" style="width:100%" href="#/book?doctor=' + esc(d.id) + '">' + icon('cal') + esc(T('bookWith')) + '</a></p><p><a class="btn ghost" style="width:100%" href="' + tel(C.hospital.phones[0]) + '">' + icon('phone') + esc(T('call')) + '</a></p></div><div>' +
-        (L(d.bio) ? '<p style="font-size:1.05rem">' + esc(L(d.bio)) + '</p>' : '') + '<dl>' +
+        (L(d.bio) ? String(L(d.bio)).split(/\n\s*\n/).map(function (para) { return para.trim() ? '<p style="font-size:1.05rem">' + esc(para.trim()).replace(/\n/g, '<br>') + '</p>' : ''; }).join('') : '') + '<dl>' +
         (dp ? '<dt>' + esc(T('department')) + '</dt><dd><a href="#/department/' + esc(dp.id) + '">' + esc(L(dp.name)) + '</a></dd>' : '') +
         (d.degrees ? '<dt>' + esc(T('degrees')) + '</dt><dd>' + esc(d.degrees) + '</dd>' : '') +
         (d.nmc ? '<dt>' + esc(T('nmc')) + '</dt><dd>' + esc(d.nmc) + '</dd>' : '') +
         (d.affiliation ? '<dt>' + esc(T('affiliation')) + '</dt><dd>' + esc(d.affiliation) + '</dd>' : '') +
+        (webUrl(d.website) ? '<dt>' + esc(T('website')) + '</dt><dd><a href="' + esc(webUrl(d.website)) + '" target="_blank" rel="noopener">' + esc(String(d.website).replace(/^https?:\/\//i, '').replace(/\/$/, '')) + '</a></dd>' : '') +
         '<dt>' + esc(T('schedule')) + '</dt><dd>' + esc(scheduleOf(d)) + (visit ? ' — ' + esc(T('nextVisit')) + ': <b>' + esc(fmtDate(nextVisit(d))) + '</b>' : '') + '</dd>' +
         (S.hasFixedSchedule(d) && hoursOf(d) ? '<dt>' + esc(T('hours')) + '</dt><dd>' + esc(hoursOf(d)) + '</dd>' : '') +
         ((d.languages || []).length ? '<dt>' + esc(T('languages')) + '</dt><dd>' + esc(d.languages.join(', ')) + '</dd>' : '') +

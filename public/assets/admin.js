@@ -32,7 +32,7 @@
     openingHours: 'Opening hours text', latitude: 'Latitude', longitude: 'Longitude', beds: 'Number of beds',
     registeredWith: 'Registered with', registrationNo: 'Hospital registration number', panNo: 'PAN number', companyRegNo: 'Company registration number',
     licenceNo: 'Licence / permit number', licenceAuthority: 'Licence issued by', showOnWebsite: 'Show these numbers on the website',
-    nmc: 'NMC number', dept: 'Department', degrees: 'Qualifications / degrees', affiliation: 'Other hospital / institution', focus: 'Clinical focus (one per line)',
+    nmc: 'NMC number', dept: 'Department', degrees: 'Qualifications / degrees', affiliation: 'Other hospital / institution', website: 'Personal website (optional, e.g. drdipendra.com.np)', focus: 'Clinical focus (one per line)',
     languages: 'Languages spoken (one per line)', days: 'OPD days', monthlyWeek: 'Monthly visit — which week (0 = not a monthly visitor)', monthlyDay: 'Monthly visit — day',
     scheduleNote: 'Schedule text shown to patients', hours: 'OPD hours (e.g. 09:00-13:00, 15:00-17:00). Empty = default hours',
     photo: 'Photo', image: 'Photo', logo: 'Logo', featured: 'Show on home page', visible: 'Show on website', lockFromForm: 'Ignore Google Form answers for this doctor',
@@ -95,7 +95,7 @@
     tests: function () { return { id: 'test-' + Date.now().toString(36), category: 'Other', name: 'New test', price: '', sample: 'Blood', fasting: false, includes: '', keywords: '', homeCollection: true, visible: true }; },
     stats: function () { return { value: '0', label: t('Label') }; },
     departments: function () { return { id: 'new-dept-' + Date.now().toString(36), name: t('New department'), icon: 'stethoscope', summary: t(), keywords: [], image: '' }; },
-    doctors: function () { var m = A.content.meta = A.content.meta || {}; m.doctorSeq = Math.max(+m.doctorSeq || 0, Math.max.apply(null, [0].concat((A.content.doctors || []).map(function (d) { return +d.no || 0; })))) + 1; /* next serial doctor ID: numbers only, never used again */ return { id: String(m.doctorSeq), no: m.doctorSeq, employment: 'part', degreeLevel: 'MD', videoConsult: true, name: t('Dr. '), title: t(), dept: '', degrees: '', nmc: '', affiliation: '', gender: '', languages: ['Nepali', 'English'], days: [], monthlyWeek: 0, monthlyDay: '', scheduleNote: t(), hours: '', photo: 'img/ph/P19.svg', focus: [], bio: t(), featured: false, visible: true, lockFromForm: false }; },
+    doctors: function (blank) { var seq = 0; if (!blank && A.content) { var m = A.content.meta = A.content.meta || {}; seq = m.doctorSeq = Math.max(+m.doctorSeq || 0, Math.max.apply(null, [0].concat((A.content.doctors || []).map(function (d) { return +d.no || 0; })))) + 1; } /* next serial doctor ID: numbers only, never used again; blank = shape only, used when loading existing doctors */ return { id: seq ? String(seq) : '', no: seq || undefined, employment: 'part', degreeLevel: 'MD', videoConsult: true, name: t('Dr. '), title: t(), dept: '', degrees: '', nmc: '', affiliation: '', gender: '', languages: ['Nepali', 'English'], days: [], monthlyWeek: 0, monthlyDay: '', scheduleNote: t(), hours: '', photo: 'img/ph/P19.svg', focus: [], bio: t(), featured: false, visible: true, lockFromForm: false, website: '' }; },
     conditions: function () { return { id: 'condition-' + Date.now().toString(36), dept: '', name: t('New condition'), keywords: [], what: t(), symptoms: t(), prepare: t(), treatment: t(), recovery: t(), urgent: t(), visible: true }; },
     facilities: function () { return { id: 'facility-' + Date.now().toString(36), name: t('New facility'), short: t(), description: t(), image: 'img/ph/P19.svg', photoNo: '', open247: false, visible: true }; },
     services: function () { return { name: t('New service'), description: t(), icon: 'stethoscope', visible: true }; },
@@ -149,7 +149,12 @@
   // ---------------------------------------------------------------- startup
   function start() {
     req('GET', 'api/me').then(function (j) { A.user = j.user; A.channels = j.channels; return loadContent(); })
-      .catch(function (e) { if (e.status === 401) loginScreen(); else { A.demo = true; loginScreen(); } });
+      .catch(function (e) {
+        if (e.status === 401) return loginScreen();
+        // only a missing server (opened as a file, or the network failed) means preview mode; any other error is shown as it is
+        if (location.protocol === 'file:' || /failed to fetch|networkerror|load failed/i.test(String(e && e.message))) { A.demo = true; return loginScreen(); }
+        loginScreen('The admin panel could not open: ' + (e && e.message || e) + '. Please reload; if it keeps happening, tell the developer.');
+      });
   }
   function loginScreen(msg) {
     $('#app').innerHTML = '<div class="login"><form id="loginForm"><img src="img/logo.png" alt=""><h1>NIKO Hospital — Staff login</h1>' +
@@ -175,7 +180,7 @@
   function normalize(c) {
     Object.keys(TEMPLATES).forEach(function (k) {
       if (!Array.isArray(c[k])) c[k] = [];
-      c[k] = c[k].map(function (item) { var tpl = TEMPLATES[k](); Object.keys(item).forEach(function (x) { tpl[x] = item[x]; }); return tpl; });
+      c[k] = c[k].map(function (item) { var tpl = TEMPLATES[k](true); Object.keys(item).forEach(function (x) { tpl[x] = item[x]; }); return tpl; });
     });
     c.ui = c.ui || { en: {}, ne: {} }; c.ui.en = c.ui.en || {}; c.ui.ne = c.ui.ne || {};
     return c;
