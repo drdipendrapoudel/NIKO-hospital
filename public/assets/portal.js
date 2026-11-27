@@ -23,6 +23,7 @@
   function api(method, path, body, isForm) {
     var h = { 'X-Requested-With': 'niko-app' };
     if (body && !isForm) h['Content-Type'] = 'application/json';
+    if (P.roomKey && path.indexOf('api/p/room/') === 0) h['X-Room-Key'] = P.roomKey;
     return fetch(path, { method: method, headers: h, credentials: 'same-origin', body: isForm ? body : body ? JSON.stringify(body) : undefined })
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
@@ -158,7 +159,7 @@
   N.afterRender.push(function (r) {
     if (r.page === 'dashboard' && P.me && !P.me.needsProfile) loadTab(P.tab);
     if (r.page === 'consult') consultInit();
-    if (r.page === 'room') roomInit(r.id);
+    if (r.page === 'room') roomInit(r.id, r.q);
     if (r.page !== 'room' && P.room) roomLeave();
     if (r.page === 'account') { var f = $('[data-pform=profile]'); if (f && !P.me.type) { var s = $('[name=type]', f); if (s) s.focus(); } }
   });
@@ -213,14 +214,20 @@
       function row(c) {
         var canRun = doc && c.status === 'confirmed';
         return '<div class="item"><div class="top"><h3>' + esc(doc ? c.patientName + (c.patientAge ? ' (' + c.patientAge + (c.patientGender ? ' ' + c.patientGender.charAt(0) : '') + ')' : '') : c.doctorName) + '</h3>' + status(c.status) + '</div>' +
-          '<dl class="kv"><dt>' + esc(t('When', 'कहिले')) + '</dt><dd>' + esc(fmt(c.date)) + ' · ' + esc(c.time) + '</dd>' + (doc ? '<dt>' + esc(t('Doctor', 'डाक्टर')) + '</dt><dd>' + esc(c.doctorName) + '</dd><dt>' + esc(t('Phone', 'फोन')) + '</dt><dd><a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a></dd>' : '') +
-          '<dt>' + esc(t('Code', 'कोड')) + '</dt><dd>' + esc(c.code) + ' · Rs ' + esc(c.fee) + '</dd>' + (c.reason ? '<dt>' + esc(t('Reason', 'कारण')) + '</dt><dd>' + esc(c.reason) + '</dd>' : '') + (c.patientJoinedAt && doc ? '<dt>' + esc(t('Patient joined', 'बिरामी जोडिए')) + '</dt><dd>' + esc(when(c.patientJoinedAt)) + '</dd>' : '') + '</dl>' +
+          '<dl class="kv"><dt>' + esc(t('When', 'कहिले')) + '</dt><dd>' + esc(fmt(c.date)) + ' · ' + esc(c.time) + (c.instant ? ' · <b>' + esc(t('Right now', 'अहिले नै')) + '</b>' : '') + '</dd>' + (doc ? '<dt>' + esc(t('Doctor', 'डाक्टर')) + '</dt><dd>' + esc(c.doctorName) + '</dd><dt>' + esc(t('Phone', 'फोन')) + '</dt><dd><a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a></dd>' : '') +
+          '<dt>' + esc(t('Code', 'कोड')) + '</dt><dd>' + esc(c.code) + (c.startedBy ? ' · ' + esc(t('started by', 'सुरु गर्ने')) + ' ' + esc(c.startedBy) : ' · Rs ' + esc(c.fee)) + '</dd>' + (c.reason ? '<dt>' + esc(t('Reason', 'कारण')) + '</dt><dd>' + esc(c.reason) + '</dd>' : '') + (c.patientJoinedAt && doc ? '<dt>' + esc(t('Patient joined', 'बिरामी जोडिए')) + '</dt><dd>' + esc(when(c.patientJoinedAt)) + '</dd>' : '') + '</dl>' +
           '<div class="acts">' + (c.joinUrl ? '<a class="btn sm" href="' + esc(c.joinUrl) + '">' + icon('video') + esc(doc ? t('Start the call', 'कल सुरु गर्नुहोस्') : t('Join the call', 'कलमा जोडिनुहोस्')) + '</a>' : '') +
           (canRun ? '<button class="btn sm ghost" data-pact="c-remind" data-id="' + esc(c.id) + '">' + icon('mail') + esc(t('Email join link to patient', 'बिरामीलाई लिङ्क इमेल')) + '</button><button class="btn sm ghost" data-pact="c-status" data-s="completed" data-id="' + esc(c.id) + '">' + esc(t('Mark completed', 'सम्पन्न')) + '</button>' : '') +
           (c.status === 'payment_review' && !doc ? '<span class="small muted">' + esc(t('We are checking your payment. You will get an email when it is confirmed.', 'भुक्तानी जाँच हुँदैछ । पुष्टि भएपछि इमेल आउनेछ ।')) + '</span>' : '') +
           (c.receipt && (a.seesAll || a.canVerify || !doc) ? fileLink(c.receipt, t('Receipt', 'रसिद')) : '') + '</div></div>';
       }
-      D('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h2 style="margin:0;font-size:1.3rem">' + esc(t('Upcoming', 'आगामी')) + '</h2>' + (a.type === 'patient' ? '<a class="btn sm" href="#/consult">' + icon('video') + esc(t('Book a video consultation', 'भिडियो परामर्श बुक')) + '</a>' : '') + '</div>' +
+      D('<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><h2 style="margin:0;font-size:1.3rem">' + esc(t('Upcoming', 'आगामी')) + '</h2>' + (a.type === 'patient' ? '<a class="btn sm" href="#/consult">' + icon('video') + esc(t('Book or consult now', 'बुक वा अहिले नै परामर्श')) + '</a>' : '<button class="btn sm" data-pact="c-startbox">' + icon('video') + esc(t('Start a video call now', 'अहिले नै भिडियो कल सुरु')) + '</button>') + '</div>' +
+        (a.type === 'patient' ? '' : '<form class="card form-grid" data-pform="c-start" id="cStart" hidden style="margin-bottom:16px"><h3 style="margin:0">' + esc(t('Start a video call right now', 'अहिले नै भिडियो कल')) + '</h3><p class="small muted" style="margin:0">' + esc(t('Opens a video room at once. You wait in the room and send the patient a quick link by WhatsApp or email — they tap it and come straight into the call, no sign-in.', 'कोठा तुरुन्त खुल्छ । बिरामीलाई व्हाट्सएप वा इमेलबाट लिङ्क पठाउनुहोस् ।')) + '</p>' +
+          (a.seesAll ? '<label class="f">' + esc(t('Doctor', 'डाक्टर')) + '<select name="doctorId" required><option value="">—</option>' + N.doctors().map(function (x) { return opt(x.id, L(x.name), a.doctorId); }).join('') + '</select></label>' : '') +
+          '<div class="two"><label class="f">' + esc(t('Patient’s name', 'बिरामीको नाम')) + '<input name="patientName" maxlength="80" required></label><label class="f">' + esc(t('Age (optional)', 'उमेर')) + '<input name="age" maxlength="10"></label></div>' +
+          '<div class="two"><label class="f">' + esc(t('WhatsApp / mobile number', 'व्हाट्सएप / मोबाइल')) + '<input name="phone" type="tel" maxlength="20"></label><label class="f">' + esc(t('Email (optional)', 'इमेल')) + '<input name="email" type="email" maxlength="120"></label></div>' +
+          '<label class="f">' + esc(t('Reason (optional)', 'कारण')) + '<input name="reason" maxlength="300"></label>' +
+          '<div class="acts"><button class="btn" type="submit">' + icon('video') + esc(t('Open the video room', 'भिडियो कोठा खोल्नुहोस्')) + '</button></div><div class="msg" role="status"></div></form>') +
         (up.length ? '<div class="list">' + up.map(row).join('') + '</div>' : '<p class="empty">' + esc(t('No upcoming video consultations.', 'आगामी भिडियो परामर्श छैन ।')) + '</p>') +
         (past.length ? '<h2 style="font-size:1.2rem;margin-top:24px">' + esc(t('Earlier', 'पहिलेका')) + '</h2><div class="list">' + past.slice(0, 60).map(row).join('') + '</div>' : ''));
     }).catch(fail);
@@ -290,10 +297,10 @@
   // payments to check (owner / payment checker)
   TABS.payments = function () {
     Promise.all([api('GET', 'api/p/consults'), api('GET', 'api/p/lab/orders')]).then(function (r) {
-      var cs = r[0].filter(function (c) { return c.status === 'payment_review'; }), lo = r[1].online.filter(function (o) { return o.payStatus === 'review'; });
+      var cs = r[0].filter(function (c) { return c.status === 'payment_review' || c.payCheck === 'pending'; }), lo = r[1].online.filter(function (o) { return o.payStatus === 'review'; });
       var recent = r[0].filter(function (c) { return c.verifiedAt; }).slice(0, 15);
       D('<h2 style="font-size:1.3rem">' + esc(t('Video consultation payments', 'भिडियो परामर्श भुक्तानी')) + '</h2>' + (cs.length ? '<div class="list">' + cs.map(function (c) {
-        return '<div class="item"><div class="top"><h3>' + esc(c.patientName) + ' → ' + esc(c.doctorName) + '</h3><span class="amount" style="font-size:1.1rem">Rs ' + esc(c.fee) + '</span></div><dl class="kv"><dt>' + esc(t('When', 'कहिले')) + '</dt><dd>' + esc(fmt(c.date)) + ' ' + esc(c.time) + '</dd><dt>' + esc(t('Paid by', 'माध्यम')) + '</dt><dd>' + esc(c.method) + '</dd><dt>' + esc(t('Code', 'कोड')) + '</dt><dd>' + esc(c.code) + '</dd><dt>' + esc(t('Phone', 'फोन')) + '</dt><dd>' + esc(c.phone) + '</dd></dl>' +
+        return '<div class="item"><div class="top"><h3>' + esc(c.patientName) + ' → ' + esc(c.doctorName) + '</h3><span class="amount" style="font-size:1.1rem">Rs ' + esc(c.fee) + '</span></div><dl class="kv"><dt>' + esc(t('When', 'कहिले')) + '</dt><dd>' + esc(fmt(c.date)) + ' ' + esc(c.time) + (c.instant ? ' · <b style="color:var(--emergency)">' + esc(c.payCheck === 'pending' ? t('RIGHT NOW – the room is already open', 'अहिले नै – कोठा खुलिसकेको') : t('RIGHT NOW – the patient is waiting', 'अहिले नै – बिरामी पर्खिरहेका')) + '</b>' : '') + '</dd><dt>' + esc(t('Paid by', 'माध्यम')) + '</dt><dd>' + esc(c.method) + '</dd><dt>' + esc(t('Code', 'कोड')) + '</dt><dd>' + esc(c.code) + '</dd><dt>' + esc(t('Phone', 'फोन')) + '</dt><dd>' + esc(c.phone) + '</dd></dl>' +
           '<div class="acts">' + fileLink(c.receipt, t('Open receipt', 'रसिद हेर्नुहोस्')) + '</div><div class="acts"><input data-note="' + esc(c.id) + '" placeholder="' + esc(t('Note (optional, sent to patient if not confirmed)', 'टिप्पणी')) + '" style="min-height:38px;flex:1;min-width:200px"><button class="btn sm green" data-pact="c-verify" data-ok="1" data-id="' + esc(c.id) + '">✓ ' + esc(t('Payment received – confirm', 'भुक्तानी प्राप्त – पुष्टि')) + '</button><button class="btn sm ghost" data-pact="c-verify" data-ok="" data-id="' + esc(c.id) + '">' + esc(t('Not received', 'प्राप्त भएन')) + '</button></div></div>';
       }).join('') + '</div>' : '<p class="empty">' + esc(t('Nothing to check.', 'जाँच्न केही छैन ।')) + '</p>') +
         '<h2 style="font-size:1.3rem;margin-top:24px">' + esc(t('Lab booking payments', 'ल्याब भुक्तानी')) + '</h2>' + (lo.length ? '<div class="list">' + lo.map(function (o) {
@@ -440,7 +447,7 @@
   // ------------------------------------------------------- video consultation page
   N.PAGES.consult = function () {
     var cs = C().consult || {};
-    if (!P.consult || P.consult.done) P.consult = { step: 1, doctorId: '', date: '', time: '', taken: [] };
+    if (!P.consult || P.consult.done) P.consult = { step: 1, doctorId: '', date: '', time: '', taken: [], now: false };
     return head(T('videoConsult'), L(cs.intro)) + '<section class="section"><div class="container" style="max-width:900px">' +
       '<p class="alert warn">' + esc(L(cs.notFor)) + '</p>' + (cs.enabled === false ? '<p class="alert">' + esc(t('Video consultation is closed at the moment. Please call us.', 'भिडियो परामर्श अहिले बन्द छ ।')) + '</p>' : '<div class="card" id="cwiz"></div>') + '</div></section>';
   };
@@ -452,6 +459,20 @@
     var w = P.consult, cs = C().consult || {}, docs = consultDoctors(), d = N.docById(w.doctorId);
     var steps = '<ol class="steps">' + [t('Doctor', 'डाक्टर'), t('Date & time', 'मिति र समय'), t('Pay & upload receipt', 'भुक्तानी र रसिद')].map(function (s, i) { return '<li' + (w.step === i + 1 ? ' aria-current="step"' : '') + (w.step > i + 1 ? ' class="done"' : '') + '>' + esc(s) + '</li>'; }).join('') + '</ol>';
     var html = steps;
+    if (w.done && w.done.instant) {
+      var ci = w.done;
+      el.innerHTML = '<div class="done-box"><div class="tick">' + icon(ci.joinUrl ? 'video' : 'clock') + '</div>' + (ci.status === 'rejected' ?
+        '<h2>' + esc(t('We could not confirm your payment', 'भुक्तानी पुष्टि हुन सकेन')) + '</h2><p>' + esc(t('Please call 057-520223 for help.', 'कृपया ०५७-५२०२२३ मा फोन गर्नुहोस् ।')) + '</p>' :
+        ci.joinUrl ? '<h2>' + esc(t('Your video room is open', 'तपाईंको भिडियो कोठा खुल्यो')) + '</h2><p>' + esc(t('Taking you to the room…', 'कोठामा लैजाँदै…')) + '</p><p><a class="btn" href="' + esc(ci.joinUrl) + '">' + icon('video') + esc(t('Enter the video room', 'भिडियो कोठामा जानुहोस्')) + '</a></p>' :
+        '<h2>' + esc(t('Receipt received – checking your payment now', 'रसिद प्राप्त – भुक्तानी जाँच हुँदैछ')) + '</h2><p>' + esc(t('Keep this page open. As soon as the payment is confirmed, the video room opens here by itself and the doctor is told you are waiting. You also get the link by email.', 'यो पेज खुला राख्नुहोस् । भुक्तानी पुष्टि हुनासाथ भिडियो कोठा आफैँ खुल्छ ।')) + '</p><p class="small muted">' + esc(t('Waiting more than 10 minutes? Call 057-520223.', '१० मिनेटभन्दा बढी पर्खनुभयो? ०५७-५२०२२३ मा फोन गर्नुहोस् ।')) + '</p>') +
+        '<div class="code">' + esc(ci.code) + '</div><p class="small muted">' + esc(ci.doctorName) + ' · Rs ' + esc(ci.fee) + '</p></div>';
+      if (ci.joinUrl) setTimeout(function () { if ($('#cwiz') && P.consult && P.consult.done === ci) location.hash = ci.joinUrl; }, 1500);
+      else if (ci.status !== 'rejected') { clearTimeout(P.consultPoll); P.consultPoll = setTimeout(function () {
+        if (!$('#cwiz') || !P.consult || P.consult.done !== ci) return;
+        api('GET', 'api/p/consults').then(function (list) { var x = list.filter(function (y) { return y.id === ci.id; })[0]; if (x && P.consult && P.consult.done === ci) P.consult.done = x; }).catch(function () {}).then(function () { if ($('#cwiz') && P.consult && P.consult.done && P.consult.done.id === ci.id) drawConsult(); });
+      }, 6000); }
+      return;
+    }
     if (w.done) {
       var c = w.done, pay = C().payments || {};
       var wa = pay.whatsapp ? 'https://wa.me/' + N.waNum(pay.whatsapp) + '?text=' + encodeURIComponent('Namaste, I paid Rs ' + c.fee + ' for video consultation ' + c.code + ' with ' + c.doctorName + ' on ' + c.date + ' ' + c.time + '. Name: ' + c.patientName + '.') : '';
@@ -466,7 +487,9 @@
       }).join('') + (docs.length ? '' : '<p class="empty">' + esc(t('No doctors are taking video consultations right now.', 'अहिले कुनै डाक्टर उपलब्ध छैनन् ।')) + '</p>') + '</div>';
     } else if (w.step === 2 && d) {
       var dates = N.S.nextDates(d, C().booking, 14);
-      html += '<div class="summary"><b>' + esc(L(d.name)) + '</b> · Rs ' + feeOf(d) + '</div><h2 style="margin-top:16px">' + esc(t('Choose a date', 'मिति छान्नुहोस्')) + '</h2><div class="dates">' + dates.map(function (s) { var dt = N.S.parse(s); return '<button data-pact="c-date" data-d="' + s + '" aria-pressed="' + (s === w.date) + '"><small>' + esc(dt.toLocaleDateString(N.lang === 'ne' ? 'ne-NP' : 'en-GB', { weekday: 'short' })) + '</small><b>' + dt.getDate() + '</b><small>' + esc(dt.toLocaleDateString(N.lang === 'ne' ? 'ne-NP' : 'en-GB', { month: 'short' })) + '</small></button>'; }).join('') + '</div>';
+      html += '<div class="summary"><b>' + esc(L(d.name)) + '</b> · Rs ' + feeOf(d) + '</div>' +
+        (cs.instant === false ? '' : '<button class="now-card" data-pact="c-now">' + icon('video') + '<span><b>' + esc(t('Consult right now', 'अहिले नै परामर्श')) + '</b><small>' + esc(t('No appointment time. Pay, upload the receipt and wait in the video room — the doctor is called at once.', 'समय छान्नु पर्दैन । भुक्तानी गरी भिडियो कोठामा पर्खनुहोस् — डाक्टरलाई तुरुन्त खबर जान्छ ।')) + '</small></span><span class="go">→</span></button><p class="or"><span>' + esc(t('or book for later', 'वा पछिका लागि बुक गर्नुहोस्')) + '</span></p>') +
+        '<h2 style="margin-top:16px">' + esc(t('Choose a date', 'मिति छान्नुहोस्')) + '</h2><div class="dates">' + dates.map(function (s) { var dt = N.S.parse(s); return '<button data-pact="c-date" data-d="' + s + '" aria-pressed="' + (s === w.date) + '"><small>' + esc(dt.toLocaleDateString(N.lang === 'ne' ? 'ne-NP' : 'en-GB', { weekday: 'short' })) + '</small><b>' + dt.getDate() + '</b><small>' + esc(dt.toLocaleDateString(N.lang === 'ne' ? 'ne-NP' : 'en-GB', { month: 'short' })) + '</small></button>'; }).join('') + '</div>';
       if (w.date) {
         var now = new Date(Date.now() + 345 * 60e3), isToday = w.date === N.today(), nowMin = now.getUTCHours() * 60 + now.getUTCMinutes() + 30;
         var slots = N.S.slots(d, Object.assign({}, C().booking, { slotMinutes: +(cs.slotMinutes || 15) })).filter(function (s) { var p = s.split(':'); return !isToday || +p[0] * 60 + +p[1] > nowMin; });
@@ -475,13 +498,14 @@
       html += '<div class="wiz-nav"><button class="btn ghost" data-pact="c-back">← ' + esc(T('back')) + '</button><button class="btn" data-pact="c-next"' + (w.time ? '' : ' disabled') + '>' + esc(T('next')) + ' →</button></div>';
     } else if (w.step === 3 && d) {
       var gate = needPatient('#/consult');
-      html += '<div class="summary"><b>' + esc(L(d.name)) + '</b> · ' + esc(fmt(w.date)) + ' · ' + esc(w.time) + '</div>';
+      html += '<div class="summary"><b>' + esc(L(d.name)) + '</b> · ' + (w.now ? esc(t('Right now', 'अहिले नै')) : esc(fmt(w.date)) + ' · ' + esc(w.time)) + '</div>' +
+        (w.now ? '<p class="alert info" style="margin-top:12px">' + esc(cs.instantStart === 'on_receipt' ? t('The video room opens as soon as you upload the receipt. If the doctor is busy with another patient you wait in the room.', 'रसिद अपलोड गर्नासाथ भिडियो कोठा खुल्छ ।') : t('The video room opens as soon as the hospital confirms your payment (usually a few minutes). If the doctor is busy with another patient you wait in the room.', 'अस्पतालले भुक्तानी पुष्टि गर्नासाथ भिडियो कोठा खुल्छ ।')) + '</p>' : '');
       if (gate) html += '<div style="margin-top:16px">' + gate + '</div><div class="wiz-nav"><button class="btn ghost" data-pact="c-back">← ' + esc(T('back')) + '</button></div>';
       else html += '<form class="form-grid" data-pform="consult" style="margin-top:16px">' + payBox(feeOf(d), t('Video consultation fee', 'भिडियो परामर्श शुल्क')) +
         '<label class="f">' + esc(t('Reason for consultation', 'परामर्शको कारण')) + '<textarea name="reason" maxlength="1000" placeholder="' + esc(t('Your main problem, how long, current medicines', 'मुख्य समस्या, कति समयदेखि, हालका औषधि')) + '"></textarea></label>' +
         '<div class="two"><label class="f">' + esc(t('Paid with', 'भुक्तानी माध्यम')) + '<select name="method">' + opt('fonepay', 'Fonepay') + opt('esewa', 'eSewa') + '</select></label><label class="f">' + esc(t('Mobile number', 'मोबाइल नम्बर')) + '<input name="phone" type="tel" value="' + esc((P.me.profile || {}).phone || '') + '" required></label></div>' +
         '<label class="f">' + esc(t('Payment receipt (screenshot or PDF)', 'भुक्तानी रसिद (स्क्रिनसट वा PDF)')) + '<input type="file" name="receipt" accept="image/*,application/pdf" required></label>' +
-        '<div class="wiz-nav"><button type="button" class="btn ghost" data-pact="c-back">← ' + esc(T('back')) + '</button><button class="btn" type="submit">' + esc(t('Submit booking', 'बुकिङ पठाउनुहोस्')) + '</button></div><div class="msg" role="status"></div></form>';
+        '<div class="wiz-nav"><button type="button" class="btn ghost" data-pact="c-back">← ' + esc(T('back')) + '</button><button class="btn" type="submit">' + esc(w.now ? t('Submit and go to the waiting room', 'पठाउनुहोस् र पर्खने कोठामा जानुहोस्') : t('Submit booking', 'बुकिङ पठाउनुहोस्')) + '</button></div><div class="msg" role="status"></div></form>';
     }
     el.innerHTML = html;
     if (focus) { var f = $(focus, el); if (f) f.focus(); }
@@ -491,24 +515,59 @@
   N.PAGES.room = function (id) {
     return head(t('Video consultation', 'भिडियो परामर्श'), '', T('videoConsult')) + '<section class="section"><div class="container" id="roomBox"><p>' + esc(T('loading')) + '</p></div></section>';
   };
-  function roomInit(id) {
+  function roomUrl(hash) { return location.origin + location.pathname + hash; }
+  function roomInit(id, q) {
+    var key = (q && q.k) || '';
     if (P.room && P.room.id === id) return;
-    if (!P.loaded) { setTimeout(function () { roomInit(id); }, 300); return; }
-    var box = $('#roomBox');
-    if (!P.me) { box.innerHTML = needLogin('#/room/' + id); return; }
+    if (!P.loaded) { setTimeout(function () { roomInit(id, q); }, 300); return; }
+    var box = $('#roomBox'); if (!box) return;
+    P.roomKey = key;
+    if (!key && !P.me) { box.innerHTML = needLogin('#/room/' + id); return; }
     api('GET', 'api/p/room/' + encodeURIComponent(id)).then(function (j) {
-      var c = j.consult, me = j.me;
-      P.room = { id: id, me: me, ice: j.ice, after: 0, pc: null, local: null, queue: [], timer: null, joined: false, consult: c };
-      box.innerHTML = '<div class="room"><div><div class="stage"><video id="remoteV" autoplay playsinline></video><div class="msg" id="stageMsg">' + esc(me === 'doctor' ? t('Press “Start” to turn on your camera and call the patient.', '“Start” थिच्नुहोस् ।') : t('Press “Join” and allow the camera and microphone. The doctor will connect at the appointment time.', '“Join” थिच्नुहोस् र क्यामेरा/माइक अनुमति दिनुहोस् ।')) + '</div><video id="localV" class="me" autoplay playsinline muted hidden></video></div>' +
-        '<div class="controls" style="margin-top:12px"><button class="btn" data-pact="r-join" style="border-radius:999px;height:54px">' + icon('video') + esc(me === 'doctor' ? t('Start', 'सुरु') : t('Join', 'जोडिनुहोस्')) + '</button>' +
+      var c = j.consult, me = j.me, doc = me === 'doctor', open = c.status === 'confirmed';
+      P.room = { id: id, key: key, hash: '#/room/' + id + (key ? '?k=' + encodeURIComponent(key) : ''), me: me, guest: j.guest, ice: j.ice, after: 0, pc: null, local: null, queue: [], timer: null, joined: false, live: false, connected: false, consult: c, invite: '' };
+      box.innerHTML = '<div class="room"><div><div class="stage"><video id="remoteV" autoplay playsinline></video><div class="msg" id="stageMsg">' + esc(doc ? t('Press “Start” to turn on your camera. If the patient is not here yet, you wait in the room and the call begins by itself when they arrive.', '“Start” थिच्नुहोस् । बिरामी नआएसम्म कोठामा पर्खनुहोस् ।') : t('Press “Join” and allow the camera and microphone. If the doctor is not here yet, you wait in the room and the call begins by itself when the doctor arrives.', '“Join” थिच्नुहोस् र क्यामेरा/माइक अनुमति दिनुहोस् । डाक्टर नआएसम्म कोठामा पर्खनुहोस् ।')) + '</div><video id="localV" class="me" autoplay playsinline muted hidden></video></div>' +
+        '<div class="controls" style="margin-top:12px"><button class="btn" data-pact="r-join" style="border-radius:999px;height:54px"' + (open ? '' : ' disabled') + '>' + icon('video') + esc(doc ? t('Start', 'सुरु') : t('Join', 'जोडिनुहोस्')) + '</button>' +
         '<button data-pact="r-mic" aria-label="Microphone" hidden>' + icon('mic') + '</button><button data-pact="r-cam" aria-label="Camera" hidden>' + icon('video') + '</button><button class="end" data-pact="r-end" hidden>' + icon('phone') + esc(t('End', 'अन्त्य')) + '</button></div>' +
-        '<p class="small muted" id="roomTip" style="text-align:center;margin-top:10px"></p></div>' +
-        '<aside class="card"><h3>' + esc(c.code) + '</h3><dl class="kv"><dt>' + esc(t('Doctor', 'डाक्टर')) + '</dt><dd>' + esc(c.doctorName) + '</dd><dt>' + esc(t('Patient', 'बिरामी')) + '</dt><dd>' + esc(c.patientName) + (c.patientAge ? ' (' + esc(c.patientAge) + ')' : '') + '</dd><dt>' + esc(t('When', 'कहिले')) + '</dt><dd>' + esc(fmt(c.date)) + ' · ' + esc(c.time) + '</dd>' + (c.reason ? '<dt>' + esc(t('Reason', 'कारण')) + '</dt><dd>' + esc(c.reason) + '</dd>' : '') + (c.phone ? '<dt>' + esc(t('Phone', 'फोन')) + '</dt><dd><a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a></dd>' : '') + '</dl>' +
-        (c.status !== 'confirmed' ? '<p class="alert warn" style="margin-top:10px">' + esc(t('This consultation is', 'यो परामर्श')) + ' ' + esc(c.status.replace('_', ' ')) + '.</p>' : '') +
-        (me === 'doctor' ? '<div class="acts" style="flex-direction:column;align-items:stretch"><button class="btn sm ghost" data-pact="r-remind">' + icon('mail') + esc(t('Patient not here? Email them the join link', 'बिरामीलाई लिङ्क इमेल गर्नुहोस्')) + '</button>' +
+        '<p class="small muted" id="roomTip" style="text-align:center;margin-top:10px"></p>' +
+        (open ? '<div class="waitbox" id="waitBox"><p class="here" id="hereMsg" role="status"></p><div id="shareBox"><p class="small" style="margin:0 0 8px"><b>' + esc(doc ? t('Send the patient a quick link', 'बिरामीलाई छिटो लिङ्क पठाउनुहोस्') : t('Send the doctor a quick link', 'डाक्टरलाई छिटो लिङ्क पठाउनुहोस्')) + '</b> — ' + esc(t('they tap it and come straight into this call, no sign-in.', 'थिच्नासाथ सिधै यही कलमा आउँछन्, साइन इन चाहिँदैन ।')) + '</p>' +
+          (doc && !c.hasEmail && !j.guest ? '<input id="inviteTo" type="email" placeholder="' + esc(t('Patient’s email (for the Email button)', 'बिरामीको इमेल')) + '" style="width:100%;margin-bottom:8px">' : '') +
+          '<div class="acts"><a class="btn sm green" id="shareWa" data-pact="r-share" data-via="wa" href="#" target="_blank" rel="noopener">' + icon('whatsapp') + esc(doc ? t('WhatsApp the patient', 'बिरामीलाई व्हाट्सएप') : t('WhatsApp the hospital', 'अस्पताललाई व्हाट्सएप')) + '</a>' +
+          '<button class="btn sm ghost" data-pact="r-share" data-via="email">' + icon('mail') + esc(doc ? t('Email the patient', 'बिरामीलाई इमेल') : t('Email the doctor', 'डाक्टरलाई इमेल')) + '</button>' +
+          '<button class="btn sm ghost" data-pact="r-share" data-via="copy">' + esc(t('Copy link', 'लिङ्क कपी')) + '</button></div></div></div>' : '') + '</div>' +
+        '<aside class="card"><h3>' + esc(c.code) + '</h3><dl class="kv"><dt>' + esc(t('Doctor', 'डाक्टर')) + '</dt><dd>' + esc(c.doctorName) + '</dd><dt>' + esc(t('Patient', 'बिरामी')) + '</dt><dd>' + esc(c.patientName) + (c.patientAge ? ' (' + esc(c.patientAge) + ')' : '') + '</dd><dt>' + esc(t('When', 'कहिले')) + '</dt><dd>' + (c.instant ? esc(t('Right now', 'अहिले नै')) + ' · ' : '') + esc(fmt(c.date)) + ' · ' + esc(c.time) + '</dd>' + (c.reason ? '<dt>' + esc(t('Reason', 'कारण')) + '</dt><dd>' + esc(c.reason) + '</dd>' : '') + (c.phone ? '<dt>' + esc(t('Phone', 'फोन')) + '</dt><dd><a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a></dd>' : '') + '</dl>' +
+        (!open ? '<p class="alert warn" style="margin-top:10px">' + esc(t('This consultation is', 'यो परामर्श')) + ' ' + esc(c.status.replace('_', ' ')) + '.</p>' : '') +
+        (doc && !j.guest ? '<div class="acts" style="flex-direction:column;align-items:stretch">' +
           '<label class="f" style="margin-top:8px">' + esc(t('Notes (private)', 'टिप्पणी')) + '<textarea id="docNotes" rows="4"></textarea></label><button class="btn sm" data-pact="r-complete">' + esc(t('Finish & mark completed', 'सम्पन्न')) + '</button></div>' : '') +
         '<p class="small muted" style="margin-top:12px">' + esc(t('Video not connecting? Use the backup room:', 'भिडियो जोडिएन? ब्याकअप कोठा:')) + ' <a href="https://meet.jit.si/NIKO-' + esc(id) + '" target="_blank" rel="noopener">meet.jit.si</a></p></aside></div>';
-    }).catch(function (e) { box.innerHTML = '<div class="alert">' + esc(e.message) + '</div>' + (e.login ? needLogin('#/room/' + id) : ''); });
+      if (!open) return;
+      // the quick link for the other person, ready before any button is pressed
+      api('POST', 'api/p/room/' + encodeURIComponent(id) + '/invite', {}).then(function (v) {
+        if (!P.room || P.room.id !== id) return;
+        P.room.invite = roomUrl(v.hash);
+        var wa = $('#shareWa'), num = doc ? v.phone : (C().payments || {}).whatsapp;
+        var txt = doc ? 'NIKO Hospital: ' + c.doctorName + ' is waiting for you in the video room now (' + c.code + '). Tap this link to join directly: ' + P.room.invite
+          : 'Namaste, I am ' + c.patientName + ', waiting in the NIKO Hospital video room for ' + c.doctorName + ' (' + c.code + '). Doctor’s quick link to join directly: ' + P.room.invite;
+        if (wa) wa.href = 'https://wa.me/' + (num ? N.waNum(num) : '') + '?text=' + encodeURIComponent(txt);
+      }).catch(function () {});
+      pollRoom();
+      if (key) roomJoin(); // a quick link goes straight into the call
+    }).catch(function (e) {
+      if (key && P.me) { location.replace('#/room/' + id); return; } // expired quick link, but signed in: use the account
+      P.roomKey = '';
+      box.innerHTML = '<div class="alert">' + esc(e.message) + '</div>' + (e.login || (key && !P.me) ? needLogin('#/room/' + id) : '');
+    });
+  }
+  function roomHere(here) {
+    var R = P.room, el = $('#hereMsg'); if (!R || !el || !here) return;
+    var doc = R.me === 'doctor', other = here[doc ? 'patient' : 'doctor'], sb = $('#shareBox'), wb = $('#waitBox');
+    if (R.connected) { if (wb) wb.hidden = true; return; }
+    if (wb) wb.hidden = false;
+    if (sb) sb.hidden = !!other;
+    el.className = 'here' + (other ? ' on' : '');
+    el.textContent = other ? (R.joined ? t('Connecting…', 'जोडिँदै…') : (doc ? t('The patient is already in the room, waiting for you. Press Start.', 'बिरामी कोठामा पर्खिरहेका छन् । Start थिच्नुहोस् ।') : t('The doctor is already in the room, waiting for you. Press Join.', 'डाक्टर कोठामा पर्खिरहनुभएको छ । Join थिच्नुहोस् ।')))
+      : (R.joined ? (doc ? t('You are in the waiting room. The patient is not here yet — the call starts by itself the moment they join.', 'तपाईं पर्खने कोठामा हुनुहुन्छ । बिरामी आउनासाथ कल आफैँ सुरु हुन्छ ।') : t('You are in the waiting room. The doctor is not here yet — the call starts by itself the moment the doctor joins.', 'तपाईं पर्खने कोठामा हुनुहुन्छ । डाक्टर आउनासाथ कल आफैँ सुरु हुन्छ ।'))
+        : (doc ? t('The patient is not here yet.', 'बिरामी अझै आएका छैनन् ।') : t('The doctor is not here yet.', 'डाक्टर अझै आउनुभएको छैन ।')));
   }
   function sig(type, data) { if (!P.room) return Promise.resolve(); return api('POST', 'api/p/room/' + encodeURIComponent(P.room.id) + '/signal', { type: type, data: data }).catch(function () {}); }
   function newPC() {
@@ -521,7 +580,8 @@
     pc.ontrack = function (e) { var v = $('#remoteV'); if (v && v.srcObject !== e.streams[0]) { v.srcObject = e.streams[0]; } var m = $('#stageMsg'); if (m) m.hidden = true; };
     pc.onconnectionstatechange = function () {
       var m = $('#stageMsg'), s = pc.connectionState;
-      if (s === 'connected') { if (m) m.hidden = true; $('#roomTip').textContent = ''; }
+      if (s === 'connected') { R.connected = true; if (m) m.hidden = true; $('#roomTip').textContent = ''; var wb = $('#waitBox'); if (wb) wb.hidden = true; }
+      if (s === 'failed' || s === 'disconnected' || s === 'closed') R.connected = false;
       if ((s === 'failed' || s === 'disconnected') && m) { m.hidden = false; m.textContent = t('Connection lost. Waiting to reconnect…', 'जडान टुट्यो । पुन: जोडिँदै…'); if (R.me === 'doctor' && s === 'failed') offer(); }
     };
     return pc;
@@ -532,8 +592,12 @@
   }
   function pollRoom() {
     var R = P.room; if (!R) return;
-    api('GET', 'api/p/room/' + encodeURIComponent(R.id) + '/signal?after=' + R.after).then(function (j) {
-      if (!P.room) return;
+    clearTimeout(R.timer);
+    api('GET', 'api/p/room/' + encodeURIComponent(R.id) + '/signal?after=' + (R.live ? R.after + '&in=1' : '999999999')).then(function (j) {
+      if (P.room !== R) return;
+      roomHere(j.here);
+      if (j.status && j.status !== 'confirmed') { var cm = $('#stageMsg'); if (cm) { cm.hidden = false; cm.textContent = t('This consultation is now closed.', 'यो परामर्श बन्द भयो ।'); } }
+      if (!R.live) return;
       j.msgs.forEach(function (m) {
         R.after = Math.max(R.after, m.n);
         if (m.type === 'join') {
@@ -551,7 +615,7 @@
           var msg = $('#stageMsg'); if (msg) { msg.hidden = false; msg.textContent = R.me === 'doctor' ? t('The patient left the call.', 'बिरामीले कल छोडे ।') : t('The doctor ended the call.', 'डाक्टरले कल अन्त्य गर्नुभयो ।'); }
         }
       });
-    }).catch(function () {}).then(function () { if (P.room) P.room.timer = setTimeout(pollRoom, 1200); });
+    }).catch(function () {}).then(function () { if (P.room === R) R.timer = setTimeout(pollRoom, R.live ? 1200 : 4000); });
   }
   function roomJoin() {
     var R = P.room; if (!R || R.joined) return;
@@ -563,9 +627,9 @@
       $('[data-pact=r-join]').hidden = true;
       $('#stageMsg').textContent = R.me === 'doctor' ? t('Waiting for the patient to join…', 'बिरामीको पर्खाइमा…') : t('Waiting for the doctor…', 'डाक्टरको पर्खाइमा…');
       // read only what is new from now on, then announce ourselves
-      api('GET', 'api/p/room/' + encodeURIComponent(R.id) + '/signal?after=999999999').then(function (j) { R.after = j.n || 0; sig('join'); pollRoom(); });
+      api('GET', 'api/p/room/' + encodeURIComponent(R.id) + '/signal?after=999999999').then(function (j) { if (P.room !== R) return; R.after = j.n || 0; R.live = true; sig('join'); pollRoom(); });
       setTimeout(function () { if (P.room && (!P.room.pc || P.room.pc.connectionState !== 'connected')) { var tip = $('#roomTip'); if (tip) tip.innerHTML = esc(t('Taking long? Check that the other person has joined. If video still does not connect, both open the backup room link on the right, or call.', 'धेरै समय लाग्यो? ब्याकअप लिङ्क प्रयोग गर्नुहोस् ।')); } }, 45000);
-    }).catch(function () { $('#roomTip').textContent = t('Camera or microphone was blocked. Allow them in the browser settings and press Join again.', 'क्यामेरा/माइक अनुमति दिनुहोस् ।'); });
+    }).catch(function () { var tp = $('#roomTip'); if (tp) tp.textContent = t('Camera or microphone was blocked. Allow them in the browser settings and press Join again.', 'क्यामेरा/माइक अनुमति दिनुहोस् ।'); });
   }
   function roomLeave() {
     var R = P.room; if (!R) return;
@@ -573,7 +637,7 @@
     if (R.joined) sig('leave');
     if (R.pc) try { R.pc.close(); } catch (e) {}
     if (R.local) R.local.getTracks().forEach(function (tr) { tr.stop(); });
-    P.room = null;
+    P.room = null; P.roomKey = '';
   }
   window.addEventListener('beforeunload', function () { if (P.room && P.room.joined && navigator.sendBeacon) { /* best effort */ roomLeave(); } });
 
@@ -696,14 +760,27 @@
       case 'read-all': api('POST', 'api/p/notes/read', {}).then(function () { P.me.unread = 0; refreshChrome(); reload(); }); break;
       case 'note-del': if (confirm(t('Delete this message for everyone?', 'सबैका लागि मेटाउने?'))) api('DELETE', 'api/p/notes/' + id).then(function () { done(); }).catch(err); break;
       case 'jump': e.preventDefault(); var tg = document.getElementById(el.getAttribute('data-t')); if (tg) tg.scrollIntoView({ behavior: 'smooth' }); break;
-      case 'c-doc': P.consult.doctorId = id; P.consult.step = 2; P.consult.date = ''; P.consult.time = ''; drawConsult('.dates button'); $('#cwiz').scrollIntoView({ block: 'start' }); break;
-      case 'c-date': P.consult.date = el.getAttribute('data-d'); P.consult.time = '';
+      case 'c-doc': P.consult.doctorId = id; P.consult.step = 2; P.consult.now = false; P.consult.date = ''; P.consult.time = ''; drawConsult('.dates button'); $('#cwiz').scrollIntoView({ block: 'start' }); break;
+      case 'c-date': P.consult.now = false; P.consult.date = el.getAttribute('data-d'); P.consult.time = '';
         api('GET', 'api/p/consult/taken?doctor=' + encodeURIComponent(P.consult.doctorId) + '&date=' + P.consult.date).then(function (j) { P.consult.taken = j.taken || []; drawConsult('.slots button:not([disabled])'); }).catch(function () { P.consult.taken = []; drawConsult(); }); break;
+      case 'c-now': P.consult.now = true; P.consult.date = ''; P.consult.time = ''; P.consult.step = 3; drawConsult('textarea'); $('#cwiz').scrollIntoView({ block: 'start' }); break;
+      case 'c-startbox': var sb = $('#cStart'); if (sb) { sb.hidden = !sb.hidden; if (!sb.hidden) { var si = $('select,input', sb); if (si) si.focus(); } } break;
       case 'c-time': P.consult.time = el.getAttribute('data-t'); drawConsult('[data-pact=c-next]'); break;
       case 'c-next': P.consult.step = 3; drawConsult('textarea'); break;
-      case 'c-back': P.consult.step = Math.max(1, P.consult.step - 1); drawConsult(); break;
-      case 'c-remind': case 'r-remind':
-        var cid = id || (P.room && P.room.consult.id);
+      case 'c-back': P.consult.step = Math.max(1, P.consult.step - 1); P.consult.now = false; drawConsult(); break;
+      case 'r-share':
+        var via = el.getAttribute('data-via'), R0 = P.room; if (!R0) break;
+        if (via === 'wa') { if (!R0.invite) { e.preventDefault(); toast(t('Getting the link… press again in a second', 'लिङ्क तयार हुँदैछ…')); } break; }
+        if (via === 'copy') {
+          if (!R0.invite) { toast(t('Getting the link… press again in a second', 'लिङ्क तयार हुँदैछ…')); break; }
+          (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(R0.invite) : Promise.reject()).then(function () { toast(t('Quick link copied — paste it in WhatsApp, Viber or SMS', 'लिङ्क कपी भयो')); }).catch(function () { window.prompt(t('Copy this link', 'यो लिङ्क कपी गर्नुहोस्'), R0.invite); });
+          break;
+        }
+        var it = $('#inviteTo');
+        api('POST', 'api/p/room/' + encodeURIComponent(R0.id) + '/invite', { email: true, to: it ? it.value.trim() : '' }).then(function (j) { toast(j.emailed ? t('Quick link emailed', 'लिङ्क इमेल गरियो') : t('The email could not be sent — please use WhatsApp', 'इमेल पठाउन सकिएन — व्हाट्सएप प्रयोग गर्नुहोस्')); }).catch(function (x) { toast(x.message); if (it) it.focus(); });
+        break;
+      case 'c-remind':
+        var cid = id;
         api('POST', 'api/p/consults/' + cid + '/remind', {}).then(function (j) { toast(j.emailed ? t('Join link emailed to the patient', 'बिरामीलाई लिङ्क इमेल गरियो') : t('Shown on the patient’s dashboard (email not sent)', 'ड्यासबोर्डमा देखाइयो')); }).catch(err); break;
       case 'c-status': api('POST', 'api/p/consults/' + id + '/status', { status: el.getAttribute('data-s') }).then(function () { done(); }).catch(err); break;
       case 'c-verify': var note = $('[data-note="' + id + '"]'); api('POST', 'api/p/consults/' + id + '/verify', { ok: !!el.getAttribute('data-ok'), note: note ? note.value : '' }).then(function () { done(el.getAttribute('data-ok') ? t('Confirmed — doctor, Director and patient were told', 'पुष्टि भयो') : t('Patient was told', 'बिरामीलाई जानकारी दिइयो')); }).catch(err); break;
@@ -748,8 +825,8 @@
       case 'r-join': roomJoin(); break;
       case 'r-mic': var at = P.room.local.getAudioTracks()[0]; at.enabled = !at.enabled; el.classList.toggle('off', !at.enabled); el.innerHTML = icon(at.enabled ? 'mic' : 'micoff'); break;
       case 'r-cam': var vt = P.room.local.getVideoTracks()[0]; vt.enabled = !vt.enabled; el.classList.toggle('off', !vt.enabled); el.innerHTML = icon(vt.enabled ? 'video' : 'camoff'); break;
-      case 'r-end': var rid = P.room.id; roomLeave(); $('#roomBox').innerHTML = '<div class="done-box card"><h2>' + esc(t('Call ended', 'कल समाप्त')) + '</h2><p><a class="btn" href="#/room/' + esc(rid) + '" data-pact="r-rejoin">' + esc(t('Rejoin', 'फेरि जोडिनुहोस्')) + '</a> <a class="btn ghost" href="#/dashboard/consults">' + esc(T('dashboard')) + '</a></p></div>'; break;
-      case 'r-rejoin': e.preventDefault(); roomInit(location.hash.split('/')[2]); break;
+      case 'r-end': var rh = P.room.hash; roomLeave(); $('#roomBox').innerHTML = '<div class="done-box card"><h2>' + esc(t('Call ended', 'कल समाप्त')) + '</h2><p><a class="btn" href="' + esc(rh) + '" data-pact="r-rejoin">' + esc(t('Rejoin', 'फेरि जोडिनुहोस्')) + '</a>' + (P.me ? ' <a class="btn ghost" href="#/dashboard/consults">' + esc(T('dashboard')) + '</a>' : '') + '</p></div>'; break;
+      case 'r-rejoin': e.preventDefault(); var ph = N.parseHash(); roomInit(ph.id, ph.q); break;
       case 'r-complete': var nts = ($('#docNotes') || {}).value || ''; api('POST', 'api/p/consults/' + P.room.consult.id + '/status', { status: 'completed', notes: nts }).then(function () { roomLeave(); toast(t('Marked completed', 'सम्पन्न भयो')); location.hash = '#/dashboard/consults'; }).catch(err); break;
     }
   });
@@ -804,9 +881,11 @@
     } else if (kind === 'report-upload') {
       var fd = new FormData(f); fd.append('patientId', ($('[data-pps=up]') || {}).value || '');
       api('POST', 'api/p/reports/upload', fd, true).then(function () { f.reset(); ok(t('Report uploaded and patient told', 'रिपोर्ट अपलोड भयो')); }).catch(fail);
+    } else if (kind === 'c-start') {
+      api('POST', 'api/p/consults/start', data).then(function (j) { location.hash = j.consult.joinUrl; }).catch(fail);
     } else if (kind === 'consult') {
       var w = P.consult, fd2 = new FormData(f);
-      fd2.append('doctorId', w.doctorId); fd2.append('date', w.date); fd2.append('time', w.time);
+      fd2.append('doctorId', w.doctorId); fd2.append('date', w.date); fd2.append('time', w.time); if (w.now) fd2.append('now', '1');
       api('POST', 'api/p/consults', fd2, true).then(function (j) { w.done = j.consult; drawConsult(); window.scrollTo(0, 0); }).catch(function (er) {
         fail(er); if (er.status === 409) { w.step = 2; w.time = ''; api('GET', 'api/p/consult/taken?doctor=' + encodeURIComponent(w.doctorId) + '&date=' + w.date).then(function (j) { w.taken = j.taken; drawConsult(); }); }
       });

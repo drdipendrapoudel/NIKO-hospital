@@ -51,6 +51,7 @@
     conditionPrepare: 'General “How to prepare” text', conditionDisclaimer: 'Health information disclaimer', portalIntro: 'Patient portal text', footerNote: 'Footer copyright text',
     patientName: 'Patient name (or initials)', consent: 'Patient gave written consent to publish',
     eyebrow: 'Small label above the title', tab: 'Short text on the slide tab', seconds: 'Show this slide for … seconds', startDate: 'Show from (optional)', endDate: 'Show until (optional)',
+    instant: 'Offer “Consult right now” (no appointment time)', instantStart: 'Consult right now: when does the video room open?',
     degreeLevel: 'Degree level (sets video consultation fee)', videoConsult: 'Takes video consultations', fonepayQr: 'Fonepay QR code image', esewaQr: 'eSewa QR code image', accountName: 'Account name shown under the QR',
     feeMD: 'Video consultation fee – MD doctors (Rs)', feeDM: 'Video consultation fee – DM doctors (Rs)', homeCollectionFee: 'Home collection charge (Rs, 0 = free)', collectionSlots: 'Collection time slots (one per line)',
     homeCollection: 'Offer home sample collection', includes: 'Tests in this panel (shown under the name)', keywords: 'Extra search words', notFor: 'Warning text (not for emergencies)', price: 'Price (Rs, empty = ask at the hospital)', forWhom: 'Who it is for', tests: 'Tests included',
@@ -71,6 +72,7 @@
   var SELECTS = {
     kind: [['news', 'News'], ['event', 'Event']], type: [['notice', 'Notice'], ['vacancy', 'Vacancy']],
     degreeLevel: [['MD', 'MD / MS (Rs 700)'], ['DM', 'DM / MCh (Rs 950)']],
+    instantStart: [['after_payment', 'After the payment is confirmed (safer)'], ['on_receipt', 'As soon as the receipt is uploaded (payment checked afterwards)']],
     category: [['success', 'Success story'], ['launch', 'New service'], ['news', 'News'], ['health', 'Health alert / epidemic'], ['director', 'Director’s article']],
     gender: [['', '—'], ['Male', 'Male'], ['Female', 'Female']], monthlyDay: [['', '—'], ['Sun', 'Sunday'], ['Mon', 'Monday'], ['Tue', 'Tuesday'], ['Wed', 'Wednesday'], ['Thu', 'Thursday'], ['Fri', 'Friday'], ['Sat', 'Saturday']],
     fontFamily: [['system', 'Clean (default)'], ['rounded', 'Rounded'], ['serif', 'Classic serif']],

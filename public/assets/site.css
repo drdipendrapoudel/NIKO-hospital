@@ -553,6 +553,22 @@ footer .soc-links .icon-btn{background:rgba(255,255,255,.06);border-color:rgba(2
 .controls button.off{background:#fde8e8;color:var(--emergency)}
 .controls button.end{background:var(--emergency);color:#fff;border-radius:999px;padding:0 22px;font-weight:700;gap:8px}
 
+/* consult now + waiting room */
+.now-card{display:flex;gap:14px;align-items:center;width:100%;margin-top:16px;padding:16px 18px;border:2px solid var(--accent,#f47b20);border-radius:var(--radius);background:#fff7ef;color:inherit;cursor:pointer;text-align:left;font:inherit}
+.now-card:hover,.now-card:focus-visible{background:#ffeeda}
+.now-card svg{width:30px;height:30px;flex:none;color:var(--accent,#f47b20)}
+.now-card b{display:block;font-size:1.1rem}
+.now-card small{display:block;color:var(--muted);margin-top:2px}
+.now-card .go{margin-left:auto;font-size:1.4rem;font-weight:700}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.85rem;margin:16px 0 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.waitbox{margin-top:12px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.waitbox .here{margin:0 0 10px;font-weight:600;display:flex;gap:8px;align-items:center}
+.waitbox .here:before{content:"";width:10px;height:10px;border-radius:50%;background:#c9a227;flex:none}
+.waitbox .here.on:before{background:#1f9d55}
+.waitbox .here:empty{display:none}
+.waitbox .acts{gap:8px;flex-wrap:wrap}
+
 /* risk check */
 .risk-q{display:grid;gap:8px;margin-bottom:16px}
 .risk-q .opts{display:grid;gap:8px}

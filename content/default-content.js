@@ -834,6 +834,8 @@ module.exports = {
     feeMD: 700,
     feeDM: 950,
     slotMinutes: 15,
+    instant: true,
+    instantStart: 'after_payment',
     intro: t('See a NIKO Hospital specialist by video call from home. Choose a doctor and time, pay by Fonepay or eSewa, upload the receipt — and join the call from this website at your appointment time.', 'घरबाटै भिडियो कलमार्फत निको अस्पतालका विशेषज्ञसँग परामर्श गर्नुहोस् ।'),
     notFor: t('Not for emergencies. For chest pain, breathing difficulty, heavy bleeding, unconsciousness or injury, come to the Emergency or call 057-520223.', 'आकस्मिक अवस्थाका लागि होइन । आकस्मिक अवस्थामा ०५७-५२०२२३ मा फोन गर्नुहोस् ।'),
   },
