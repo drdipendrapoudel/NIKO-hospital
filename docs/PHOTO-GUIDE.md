@@ -1,5 +1,13 @@
 # Photo guide — NIKO Hospital website
 
+> **27 Nov 2026 — template photos are in place.** Every picture slot now shows a free stock photo
+> (from Pexels) and every doctor shows a coloured avatar (blue = male, pink = female, green = gender not set).
+> **These are not photos of NIKO Hospital.** Replace each one with a real photo using the numbers below:
+> upload it in **Admin → the matching section → Upload photo**. The full list of template photos is in
+> `content/template-photos.js`. The six reviews marked “Sample” are examples — replace them with real
+> patients’ words in **Admin → Testimonials**.
+
+
 Every placeholder picture on the website shows a number in the middle (for example **P06** or **D05**).
 Take a real photo of that place or person, name the file with the same number (for example `P06.jpg`),
 then upload it in **Admin → the matching section → Upload photo**. The website resizes photos automatically.

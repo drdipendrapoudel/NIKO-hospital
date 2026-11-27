@@ -14,6 +14,9 @@ const safe = (s) => s.replace(/<\/(script)/gi, '<\\/$1');
 const content = JSON.parse(JSON.stringify(require('../content/default-content')));
 let json = JSON.stringify(content);
 json = json.replace(/"(img\/[\w./-]+\.(svg|png|jpg))"/g, (m, rel) => `"${dataUri(rel)}"`);
+// Template photos are served by the server; the offline preview loads them straight from the source.
+const TP = require('../content/template-photos');
+json = json.replace(/"stock\/([\w-]+)\.jpg"/g, (m, key) => JSON.stringify(TP.cdnUrl(key) || m.slice(1, -1)));
 const logo = dataUri('img/logo.png');
 
 const site = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">

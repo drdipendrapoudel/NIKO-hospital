@@ -16,6 +16,8 @@ const sheet = require('./lib/sheet');
 const notify = require('./lib/notify');
 const schedule = require('./public/assets/schedule');
 const DEFAULT_CONTENT = require('./content/default-content');
+const TP = require('./content/template-photos');
+const stock = require('./lib/stock');
 const mailer = require('./lib/mailer');
 const accounts = require('./lib/accounts');
 const portal = require('./lib/portal');
@@ -77,6 +79,35 @@ if (!content) { content = JSON.parse(JSON.stringify(DEFAULT_CONTENT)); content.m
       content.lab.note = JSON.parse(JSON.stringify(DEFAULT_CONTENT.lab.note));
     }
     m.labListVersion = 2; changed = true;
+  }
+  // Template photos, doctor avatars and sample reviews (27 Nov 2026): nothing on the site is left without a picture.
+  // Only empty or numbered-placeholder pictures are filled; photos uploaded by the hospital are never touched.
+  if (!(Number(m.templatePhotosVersion) >= 1)) {
+    const blank = (v) => !v || /(^|\/)img\/ph\/P\d+\.svg$/.test(String(v));
+    const en = (v) => (v && typeof v === 'object' ? v.en || '' : String(v || ''));
+    const fill = (item, key, hint, n) => {
+      if (!item || !blank(item[key])) return;
+      const k = TP.BY_PHOTO_NO[item.photoNo] || hint || TP.pick(`${item.id || ''} ${en(item.name)} ${en(item.title)}`, n);
+      item[key] = TP.path(k); item.template = true;
+    };
+    (content.facilities || []).forEach((f, i) => fill(f, 'image', null, i));
+    (content.slides || []).forEach((x, i) => fill(x, 'image', null, i));
+    (content.news || []).forEach((x, i) => fill(x, 'image', null, i));
+    (content.stories || []).forEach((x, i) => fill(x, 'image', null, i));
+    (content.articles || []).forEach((x, i) => fill(x, 'image', null, i));
+    (content.departments || []).forEach((d, i) => fill(d, 'image', TP.BY_DEPARTMENT[d.id], i));
+    (content.gallery || []).forEach((g, i) => fill(g, 'image', TP.GALLERY[i % TP.GALLERY.length][0], i));
+    if ((content.gallery || []).length < 4) {
+      const used = new Set((content.gallery || []).map((g) => g.image));
+      content.gallery = (content.gallery || []).concat(TP.GALLERY.filter(([k]) => !used.has(TP.path(k)))
+        .map(([k, e, n]) => ({ image: TP.path(k), caption: { en: e, ne: n }, template: true, visible: true })));
+    }
+    if (blank(content.pillarsImage)) content.pillarsImage = 'img/P01-building.jpg';
+    if (content.about && blank(content.about.image)) content.about.image = 'img/P01-building.jpg';
+    // Coloured avatars need a gender; the doctors on the poster are set to Male unless already filled in (change in Admin → Doctors).
+    (content.doctors || []).forEach((d) => { if (!d.gender && /^D\d\d$/.test(d.id || '')) d.gender = 'Male'; });
+    if (!(content.testimonials || []).length) content.testimonials = JSON.parse(JSON.stringify(DEFAULT_CONTENT.testimonials));
+    m.templatePhotosVersion = 1; changed = true;
   }
   if (changed) store.write('content', content);
 }());
@@ -475,6 +506,7 @@ setInterval(() => {
 }, 30 * 60e3).unref();
 
 // ----------------------------------------------------------------- static files
+stock.mount(app, UPLOAD_DIR); // template photos at /stock/<name>.jpg
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', setHeaders: (res) => res.set('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: PROD ? '1h' : 0,

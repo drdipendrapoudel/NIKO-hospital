@@ -85,7 +85,7 @@
   var TEMPLATES = {
     slides: function () { return { image: 'img/ph/P19.svg', photoNo: '', eyebrow: t(), title: t('New slide'), tab: t(), text: t(), buttonText: t(), buttonLink: '#/book', seconds: 6, startDate: '', endDate: '', visible: true }; },
     articles: function () { return { id: 'a' + Date.now().toString(36), category: 'news', date: new Date().toISOString().slice(0, 10), image: 'img/P01-building-wide.jpg', title: t('New article'), summary: t(), body: t(), author: t('NIKO Hospital'), showOnHome: true, visible: true }; },
-    gallery: function () { return { image: 'img/ph/P19.svg', caption: t(), visible: true }; },
+    gallery: function () { return { image: 'stock/cabin.jpg', caption: t(), visible: true }; },
     pillars: function () { return { title: t('Reason'), text: t(), icon: 'star', visible: true }; },
     packages: function () { return { id: 'pkg-' + Date.now().toString(36), name: t('New package'), price: '', forWhom: t(), tests: [], description: t(), visible: true }; },
     tests: function () { return { id: 'test-' + Date.now().toString(36), category: 'Other', name: 'New test', price: '', sample: 'Blood', fasting: false, includes: '', keywords: '', homeCollection: true, visible: true }; },

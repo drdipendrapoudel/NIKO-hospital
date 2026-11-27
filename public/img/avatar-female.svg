@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" width="600" height="720" role="img" aria-label="Female doctor">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde9f1"/><stop offset="1" stop-color="#f6c3d8"/></linearGradient></defs>
+<rect width="600" height="720" fill="url(#g)"/>
+<circle cx="300" cy="300" r="250" fill="#fff" fill-opacity=".35"/>
+<path d="M172 330c-22-120 30-226 128-226s150 106 128 226c-4 34-22 60-40 74 14-52 16-104 4-150-18-52-52-74-92-74s-74 22-92 74c-12 46-10 98 4 150-18-14-36-40-40-74z" fill="#8a1f55"/>
+<rect x="262" y="350" width="76" height="90" rx="30" fill="#f1c9a5"/>
+<path d="M70 720c0-150 100-236 230-236s230 86 230 236z" fill="#fff"/>
+<path d="M232 492l68 96 68-96c-20-8-44-12-68-12s-48 4-68 12z" fill="#c2337a"/>
+<path d="M300 588l-22 132h44z" fill="#8a1f55"/>
+<path d="M232 492l-34 18 60 110 42-32zM368 492l34 18-60 110-42-32z" fill="#eef3fa"/>
+<circle cx="300" cy="262" r="104" fill="#f6d5b5"/>
+<path d="M192 250c0-84 48-134 108-134s108 50 108 134c-30-34-62-58-108-60-46 2-78 26-108 60z" fill="#8a1f55"/>
+<path d="M196 520c-10 60-6 104 20 128M404 520c10 60 6 104-20 128" fill="none" stroke="#8a1f55" stroke-width="9" stroke-linecap="round"/>
+<path d="M216 648c18 30 150 30 168 0" fill="none" stroke="#8a1f55" stroke-width="9" stroke-linecap="round"/>
+<circle cx="300" cy="676" r="22" fill="#c2337a"/><circle cx="300" cy="676" r="10" fill="#fff"/>
+</svg>

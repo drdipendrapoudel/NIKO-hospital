@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" width="600" height="720" role="img" aria-label="Male doctor">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4eefb"/><stop offset="1" stop-color="#bcd4f3"/></linearGradient></defs>
+<rect width="600" height="720" fill="url(#g)"/>
+<circle cx="300" cy="300" r="250" fill="#fff" fill-opacity=".35"/>
+
+<rect x="262" y="350" width="76" height="90" rx="30" fill="#f1c9a5"/>
+<path d="M70 720c0-150 100-236 230-236s230 86 230 236z" fill="#fff"/>
+<path d="M232 492l68 96 68-96c-20-8-44-12-68-12s-48 4-68 12z" fill="#1a5bb0"/>
+<path d="M300 588l-22 132h44z" fill="#0e3a73"/>
+<path d="M232 492l-34 18 60 110 42-32zM368 492l34 18-60 110-42-32z" fill="#eef3fa"/>
+<circle cx="300" cy="262" r="104" fill="#f6d5b5"/>
+<path d="M196 232c-6-74 44-122 104-122s112 46 104 122c-10-40-40-66-104-66s-92 26-104 66z" fill="#0e3a73"/>
+<path d="M196 520c-10 60-6 104 20 128M404 520c10 60 6 104-20 128" fill="none" stroke="#0e3a73" stroke-width="9" stroke-linecap="round"/>
+<path d="M216 648c18 30 150 30 168 0" fill="none" stroke="#0e3a73" stroke-width="9" stroke-linecap="round"/>
+<circle cx="300" cy="676" r="22" fill="#1a5bb0"/><circle cx="300" cy="676" r="10" fill="#fff"/>
+</svg>

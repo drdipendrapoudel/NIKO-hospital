@@ -5,11 +5,17 @@
  *
  * Text that can appear in both languages is stored as { en: "...", ne: "..." }.
  * If the Nepali (ne) text is empty, the English text is shown.
- * Photos named img/ph/P##.svg and img/ph/D##.svg are numbered placeholders —
- * see docs/PHOTO-GUIDE.md.
+ * Photos named stock/<name>.jpg are template (stock) photos, not photos of the
+ * hospital — see content/template-photos.js and docs/PHOTO-GUIDE.md.
+ * Doctor portraits named img/ph/D##.svg are numbered placeholders; the website
+ * shows a coloured avatar (by gender) in their place until a real portrait is uploaded.
  */
+const TP = require('./template-photos');
 const t = (en, ne = '') => ({ en, ne });
-const ph = (n) => `img/ph/P${String(n).padStart(2, '0')}.svg`;
+const ph = (n) => {
+  const no = `P${String(n).padStart(2, '0')}`;
+  return TP.BY_PHOTO_NO[no] ? TP.path(TP.BY_PHOTO_NO[no]) : `img/ph/${no}.svg`;
+};
 const dph = (n) => `img/ph/D${String(n).padStart(2, '0')}.svg`;
 
 const EVERY_DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -65,7 +71,7 @@ const departments = [
     'Safe anaesthesia and pain control for operations, with monitoring before, during and after surgery.',
     ['anaesthesia', 'anesthesia', 'pain', 'surgery', 'बेहोस']],
 ].map(([id, en, ne, icon, summary, keywords]) => ({
-  id, name: t(en, ne), icon, summary: t(summary), keywords, image: '',
+  id, name: t(en, ne), icon, summary: t(summary), keywords, image: TP.BY_DEPARTMENT[id] ? TP.path(TP.BY_DEPARTMENT[id]) : '',
 }));
 
 // -------------------------------------------------------------------- doctors
@@ -79,7 +85,7 @@ const D = (n, enName, neName, dept, enTitle, neTitle, degrees, nmc, schedule, ex
   degrees,
   nmc,
   affiliation: extra.affiliation || '',
-  gender: '',
+  gender: extra.gender || 'Male',
   languages: ['Nepali', 'English'],
   days: schedule === 'daily' ? [...EVERY_DAY] : [],
   monthlyWeek: schedule === 'first-sat' ? 1 : 0,
@@ -560,6 +566,22 @@ LAB_LIST.forEach(([category, rows]) => rows.forEach(([name, price, o = {}]) => {
 }));
 
 // --------------------------------------------------------------------- export
+// ------------------------------------------------------------ sample reviews
+const SAMPLE_REVIEWS = [
+  ['We came to the emergency at night with my father’s chest pain. The doctor and nurses saw him straight away and explained every step to us.',
+    'राति बुबाको छाती दुखेर आकस्मिक कक्षमा आएका थियौं । डाक्टर र नर्सले तुरुन्तै हेर्नुभयो र हरेक कुरा बुझाउनुभयो ।'],
+  ['I booked my appointment online and was seen on time. The doctor listened patiently and explained my medicines clearly.',
+    'अनलाइनबाट अपोइन्टमेन्ट लिएँ र समयमै जाँच भयो । डाक्टरले धैर्यपूर्वक सुन्नुभयो र औषधिबारे राम्ररी बुझाउनुभयो ।'],
+  ['The lab staff collected the blood sample at home and the report was on my phone the same day. Very convenient for my mother.',
+    'ल्याबका कर्मचारीले घरमै रगतको नमुना लिनुभयो र रिपोर्ट सोही दिन मोबाइलमा आयो ।'],
+  ['Clean wards and caring nurses. After my operation the staff checked on me day and night until I went home.',
+    'सफा वार्ड र हेरचाह गर्ने नर्सहरू । अपरेसनपछि घर नफर्कुन्जेल दिनरात हेरचाह पाएँ ।'],
+  ['We no longer need to travel to Kathmandu to see a heart specialist. The monthly visiting doctors are a big help for Hetauda.',
+    'मुटुरोग विशेषज्ञ देखाउन अब काठमाडौं जानु परेन । मासिक रूपमा आउने विशेषज्ञ डाक्टरले ठूलो सहयोग भएको छ ।'],
+  ['The video consultation saved us a long trip. The doctor went through all the reports and the pharmacy had the medicines ready.',
+    'भिडियो परामर्शले लामो यात्रा जोगायो । डाक्टरले सबै रिपोर्ट हेर्नुभयो र फार्मेसीमा औषधि तयार थियो ।'],
+].map(([en, ne], i) => ({ name: `Sample patient ${i + 1}`, text: t(en, ne), rating: 5, source: 'Sample review', date: '', sample: true, visible: true }));
+
 module.exports = {
   meta: { version: 1, updatedAt: '' },
 
@@ -685,7 +707,7 @@ module.exports = {
     show: true,
     name: t('Name of Director', 'सञ्चालकको नाम'),
     designation: t('Managing Director', 'प्रबन्ध निर्देशक'),
-    photo: ph(17), photoNo: 'P17',
+    photo: 'img/ph/P17.svg', photoNo: 'P17', // until a real portrait is uploaded, the website shows the Director's doctor portrait or avatar
     message: t('Message from the director will appear here. Edit this text from the Admin panel → Director’s message.', 'सञ्चालकको सन्देश यहाँ देखिनेछ ।'),
   },
 
@@ -726,7 +748,9 @@ module.exports = {
   ],
 
   stories: [],
-  testimonials: [],
+  // Sample reviews so the section is not empty. They are marked "Sample" on the website.
+  // Replace them with real patients' words (Admin → Testimonials, or publish from the Feedback inbox).
+  testimonials: SAMPLE_REVIEWS,
 
   accreditations: [
     { name: t('Registered under the Government of Nepal', 'नेपाल सरकारमा दर्ता'), detail: t('PAN 609851586', 'प्यान नं. ६०९८५१५८६'), image: '', visible: true },
@@ -845,6 +869,7 @@ module.exports = {
 
   gallery: [
     { image: 'img/P01-building.jpg', caption: t('NIKO Hospital, Hetauda'), visible: true },
+    ...TP.GALLERY.map(([key, en, ne]) => ({ image: TP.path(key), caption: t(en, ne), template: true, visible: true })),
   ],
 
   grievance: {

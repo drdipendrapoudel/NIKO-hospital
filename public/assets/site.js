@@ -28,7 +28,25 @@
   }
   function dayName(d) { return (I.days[lang] || I.days.en)[d] || d; }
   var NOPHOTO = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720"><rect width="600" height="720" fill="#dfe8f3"/><circle cx="300" cy="270" r="120" fill="#1f487c" fill-opacity=".2"/><path d="M80 720c0-140 100-230 220-230s220 90 220 230z" fill="#1f487c" fill-opacity=".2"/></svg>');
-  function photoOf(d) { return d.photo || NOPHOTO; }
+  // Until a real portrait is uploaded, doctors get a coloured avatar by gender (blue = male, pink = female, green = not set).
+  function isPlaceholder(src) { return !src || /(^|\/)img\/ph\//.test(src); }
+  function avatarFor(g) { g = String(g || '').toLowerCase(); return 'img/avatar-' + (g === 'male' ? 'male' : g === 'female' ? 'female' : 'neutral') + '.svg'; }
+  function photoOf(d) {
+    if (!d) return NOPHOTO;
+    if (!isPlaceholder(d.photo)) return d.photo;
+    if (d === C.director) { // the Director is also one of the doctors: use that portrait or avatar
+      var me = (C.doctors || []).find(function (x) { return x.name && d.name && x.name.en === d.name.en; });
+      return me ? photoOf(me) : avatarFor('male');
+    }
+    return avatarFor(d.gender);
+  }
+  // A picture that fails to load is replaced by a local one, so no frame is ever left empty.
+  document.addEventListener('error', function (e) {
+    var el = e.target;
+    if (!el || el.tagName !== 'IMG' || el.getAttribute('data-fb')) return;
+    el.setAttribute('data-fb', '1');
+    el.src = el.closest && el.closest('.doc,.portrait,.pick-doc,.director') ? avatarFor('') : 'img/ph/template.svg';
+  }, true);
   function deptOf(id) { return (C.departments || []).find(function (d) { return d.id === id; }); }
   function doctors() { return vis(C.doctors); }
   function docById(id) { return doctors().find(function (d) { return d.id === id; }); }
@@ -481,7 +499,7 @@
       html += '<div class="card" style="margin-bottom:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><b style="font-size:2rem;color:var(--primary)">' + esc((+st.reviews.rating || 0).toFixed(1)) + '</b><div>' + stars(st.reviews.rating) + '<div class="muted small">' + esc(st.reviews.count) + ' ' + esc(T('reviewsOnGoogle')) + '</div></div></div>';
       t = st.reviews.reviews.map(function (r) { return { name: r.author, text: r.text, rating: r.rating, date: r.when, source: 'Google' }; }).concat(t);
     }
-    html += t.length ? '<div class="grid">' + t.slice(0, 6).map(function (r) { return '<figure class="card review" style="margin:0">' + stars(r.rating || 5) + '<blockquote class="quote" style="margin:0">' + esc(truncate(L(r.text), 300)) + '</blockquote><figcaption class="muted small">— ' + esc(r.name || '') + (r.source ? ' · ' + esc(r.source) : '') + (r.date ? ' · ' + esc(r.date) : '') + '</figcaption></figure>'; }).join('') + '</div>' : '';
+    html += t.length ? '<div class="grid">' + t.slice(0, 6).map(function (r) { return '<figure class="card review" style="margin:0">' + (r.sample ? '<span class="tag amber" style="align-self:flex-start">' + esc(lang === 'ne' ? 'नमुना' : 'Sample') + '</span>' : '') + stars(r.rating || 5) + '<blockquote class="quote" style="margin:0">' + esc(truncate(L(r.text), 300)) + '</blockquote><figcaption class="muted small">— ' + esc(r.name || '') + (r.source ? ' · ' + esc(r.source) : '') + (r.date ? ' · ' + esc(r.date) : '') + '</figcaption></figure>'; }).join('') + '</div>' : '';
     if (g.googleReviewUrl) html += '<p style="margin-top:16px"><a class="btn ghost" href="' + esc(g.googleReviewUrl) + '" target="_blank" rel="noopener">' + icon('star') + esc(T('reviewGoogle')) + '</a></p>';
     return html;
   }
