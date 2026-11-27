@@ -557,7 +557,11 @@ stock.mount(app, UPLOAD_DIR); // template photos at /stock/<name>.jpg
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', setHeaders: (res) => res.set('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: PROD ? '1h' : 0,
-  setHeaders: (res, p) => { if (/\.(svg|png|jpg|webp)$/.test(p)) res.set('Cache-Control', 'public, max-age=604800'); },
+  setHeaders: (res, p) => {
+    if (/\.(svg|png|jpg|webp)$/.test(p)) res.set('Cache-Control', 'public, max-age=604800');
+    // pages, scripts and styles: browsers check for a newer version every time (a quick 304 if unchanged), so fixes reach everyone at once
+    else if (/\.(html|js|css)$/.test(p)) res.set('Cache-Control', 'no-cache');
+  },
 }));
 app.get('/admin', (req, res) => res.redirect('/admin.html'));
 app.get('/opd', (req, res) => res.redirect('/opd.html'));
