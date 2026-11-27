@@ -668,3 +668,35 @@ html,body{overflow-x:clip}
 .btn{max-width:100%}
 @media (max-width:599px){.btn{white-space:normal;text-align:center;line-height:1.25;padding-top:8px;padding-bottom:8px}}
 @media (max-width:599px){.qa-card{flex-direction:column;align-items:flex-start;gap:6px;padding:12px}}
+
+/* ---- doctor setup, schedule, calendars, settings (27 Nov 2026) ---- */
+.photo-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.photo-row img{width:104px;height:124px;object-fit:cover;border-radius:14px;background:var(--tint)}
+.dayrows{display:grid;gap:8px}
+.dayrow{display:grid;grid-template-columns:minmax(104px,128px) 1fr;gap:10px;align-items:center}
+.daytap{min-height:48px;border:2px solid var(--line);border-radius:12px;background:var(--surface);font-weight:700;cursor:pointer;color:var(--muted)}
+.daytap[aria-pressed=true]{background:var(--primary);border-color:var(--primary);color:#fff}
+.dayrow .hrs{display:none;gap:6px 14px;flex-wrap:wrap;font-size:.9rem}
+.dayrow .hrs span{display:inline-flex;gap:4px;align-items:center;white-space:nowrap}
+.dayrow .hrs input,.vhrs input{min-height:40px;padding:4px 6px;width:auto;max-width:112px}
+.dayrow.on .hrs{display:flex}
+.dayrow.on .offtxt{display:none}
+.dayrows.std .dayrow.on .hrs{opacity:.55;pointer-events:none}
+.vhrs{display:flex;gap:8px 16px;flex-wrap:wrap}
+.vhrs label{display:inline-flex;gap:4px;align-items:center}
+.cal{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));margin-top:8px}
+.calm h4{margin:0 0 6px;font-size:.95rem}
+.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calg small{text-align:center;color:var(--muted);font-size:.7rem}
+.calg button{position:relative;aspect-ratio:1;min-height:38px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-weight:600;padding:0}
+.calg button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.calg button:disabled{opacity:.35;cursor:default}
+.calg button i{position:absolute;top:-5px;right:-4px;font-style:normal;font-size:.62rem;background:var(--primary-dark);color:#fff;border-radius:999px;padding:1px 5px}
+.yn{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.yn label{flex:1;min-width:120px;cursor:pointer}
+.yn input{position:absolute;opacity:0;width:1px;height:1px}
+.yn span{display:flex;gap:8px;align-items:center;justify-content:center;min-height:54px;border:2px solid var(--line);border-radius:14px;font-weight:700;background:var(--surface)}
+.yn span svg{width:20px;height:20px}
+.yn input:checked+span{background:var(--primary);border-color:var(--primary);color:#fff}
+.yn input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+@media (max-width:520px){.dayrow{grid-template-columns:1fr}.dayrow .hrs input{max-width:104px}}

@@ -109,8 +109,39 @@ if (!content) { content = JSON.parse(JSON.stringify(DEFAULT_CONTENT)); content.m
     if (!(content.testimonials || []).length) content.testimonials = JSON.parse(JSON.stringify(DEFAULT_CONTENT.testimonials));
     m.templatePhotosVersion = 1; changed = true;
   }
+  // Doctor setup (27 Nov 2026): serial numeric doctor IDs, full-time / part-time / visiting, visit dates, no video for
+  // anaesthesia and visiting specialists.
+  if (!(Number(m.doctorSetupVersion) >= 1)) {
+    const fullTime = /dipendra\s+poudel|trayush/i;
+    (content.doctors || []).forEach((d, i) => {
+      if (!d.no) d.no = i + 1;
+      const en = (d.name && d.name.en) || '';
+      if (d.dept === 'endocrinology' && !(d.days || []).length && !(Number(d.monthlyWeek) > 0)) { d.monthlyWeek = 3; d.monthlyDay = 'Sat'; d.scheduleNote = { en: 'Third Saturday of every month', ne: 'प्रत्येक महिनाको तेस्रो शनिवार' }; }
+      if (!d.employment) d.employment = Number(d.monthlyWeek) > 0 && !(d.days || []).length ? 'visiting' : fullTime.test(en) ? 'full' : 'part';
+      if (d.employment === 'visiting' && !Array.isArray(d.visitDates)) {
+        d.visitDates = schedule.nextDates(Object.assign({}, d, { employment: '', visitDates: null }), { daysAhead: 190 }, 6);
+      }
+      if (d.employment === 'visiting' || d.dept === 'anaesthesiology') d.videoConsult = false;
+    });
+    m.doctorSeq = Math.max(Number(m.doctorSeq) || 0, ...(content.doctors || []).map((d) => Number(d.no) || 0));
+    m.doctorSetupVersion = 1; changed = true;
+  }
   if (changed) store.write('content', content);
 }());
+
+// Every doctor has a serial number (numbers only, unique, never used again). New doctors get the next one.
+function numberDoctors(c, prevSeq) {
+  const m = c.meta || (c.meta = {});
+  let seq = Math.max(Number(prevSeq) || 0, Number(m.doctorSeq) || 0, ...(c.doctors || []).map((d) => Number(d.no) || 0));
+  const seen = new Set();
+  (c.doctors || []).forEach((d) => {
+    if (!Number(d.no) || seen.has(Number(d.no))) { seq += 1; d.no = seq; if (!d.id || /^(new|D[a-z0-9]{4}$)/.test(d.id)) d.id = String(seq); }
+    seen.add(Number(d.no));
+    if (!d.employment) d.employment = 'part';
+    if (d.employment === 'visiting' || d.dept === 'anaesthesiology') d.videoConsult = false;
+  });
+  m.doctorSeq = seq;
+}
 
 const users = store.read('users', {});
 if (!Object.keys(users).length) {
@@ -139,7 +170,8 @@ scheduleSheet();
 
 function publicContent() {
   const c = { ...content };
-  c.doctors = sheet.merge(content.doctors || [], sheet.current().doctors || []);
+  c.doctors = sheet.merge(content.doctors || [], sheet.current().doctors || []).map((d) => { const x = { ...d }; delete x.no; delete x.private; return x; });
+  c.consult = { ...(content.consult || {}) }; delete c.consult.alertWords;
   c.answeredQuestions = questions.filter((q) => q.published && q.answer)
     .map((q) => ({ q: q.question, a: q.answer, date: q.answeredAt }));
   c.notifyChannels = notify.configured();
@@ -256,7 +288,9 @@ app.get('/api/admin/content', auth, (req, res) => res.json(content));
 app.put('/api/admin/content', auth, (req, res) => {
   const next = req.body;
   if (!next || typeof next !== 'object' || !next.hospital || !Array.isArray(next.doctors)) return res.status(400).json({ error: 'Invalid content' });
-  next.meta = Object.assign({}, next.meta, { designVersion: content.meta.designVersion });
+  next.meta = Object.assign({}, next.meta, { designVersion: content.meta.designVersion, doctorSetupVersion: content.meta.doctorSetupVersion });
+  // keep what doctors set themselves in their dashboard if the admin page was opened before they saved
+  numberDoctors(next, content.meta.doctorSeq);
   store.snapshot('content', content);
   next.meta = { ...(next.meta || {}), updatedAt: new Date().toISOString(), updatedBy: req.user };
   delete next.answeredQuestions; delete next.notifyChannels;
@@ -298,7 +332,9 @@ app.post('/api/admin/upload', auth, upload.single('file'), (req, res) => {
 // -------------------------------------------------------------------- bookings
 const clean = (s, max = 200) => String(s ?? '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, max);
 const validPhone = (p) => /^(\+?977[- ]?)?(9[678]\d{8}|0?\d{2}[- ]?\d{6,7})$/.test(String(p).replace(/\s/g, ''));
-const findDoctor = (id) => publicContent().doctors.find((d) => d.id === id && d.visible !== false);
+const allDoctors = () => sheet.merge(content.doctors || [], sheet.current().doctors || []);
+const findDoctor = (id) => allDoctors().find((d) => d.id === id && d.visible !== false);
+const nextToken = (doctorId, date) => bookings.filter((b) => b.doctorId === doctorId && b.date === date).reduce((n, b) => Math.max(n, Number(b.token) || 0), 0) + 1;
 
 function takenSlots(doctorId, date, exceptCode) {
   return bookings.filter((b) => b.doctorId === doctorId && b.date === date && b.status !== 'cancelled' && b.code !== exceptCode)
@@ -309,8 +345,8 @@ function checkSlot(doc, date, time, exceptCode) {
   const today = schedule.todayInNepal();
   if (date < today) return 'That date has passed';
   if (!schedule.availableOn(doc, date, content.booking)) return 'The doctor is not available on that date';
-  if (schedule.hasFixedSchedule(doc)) {
-    if (!schedule.slots(doc, content.booking).includes(time)) return 'Choose a valid time';
+  if (schedule.hasFixedSchedule(doc) && !schedule.isToken(doc)) {
+    if (!schedule.slots(doc, content.booking, date).includes(time)) return 'Choose a valid time';
     const max = Number(content.booking.maxPerSlot || 1);
     if ((takenSlots(doc.id, date, exceptCode)[time] || 0) >= max) return 'That time was just booked. Please choose another time.';
   }
@@ -341,19 +377,27 @@ app.post('/api/bookings', publicLimiter, async (req, res) => {
   const booking = {
     code, status: 'new', createdAt: new Date().toISOString(),
     doctorId: doc.id, doctorName: doc.name.en, dept: doc.dept,
-    date: b.date, time: schedule.hasFixedSchedule(doc) ? b.time : 'To be confirmed',
+    date: b.date, time: schedule.isToken(doc) ? '' : schedule.hasFixedSchedule(doc) ? b.time : 'To be confirmed',
     name, phone: clean(b.phone, 20), email: clean(b.email, 120), age: clean(b.age, 3), gender: clean(b.gender, 10),
     reason: clean(b.reason, 500), notify: (Array.isArray(b.notify) ? b.notify : []).filter((x) => ['sms', 'whatsapp', 'email'].includes(x)),
     lang: b.lang === 'ne' ? 'ne' : 'en', history: [],
   };
+  if (schedule.isToken(doc)) {
+    // visiting specialist: no time slots and no limit – patients are seen in token order
+    booking.token = nextToken(doc.id, b.date); booking.time = `Token ${booking.token}`;
+  }
   bookings.push(booking);
   store.write('bookings', bookings);
+  if (booking.token) {
+    const count = bookings.filter((x) => x.doctorId === doc.id && x.date === b.date && x.status !== 'cancelled').length;
+    if (count === 150 && ctx.notify) ctx.notify({ roles: ['director'], doctors: [doc.id] }, { title: `150 online bookings for ${doc.name.en} on ${b.date}`, body: `Online bookings for ${doc.name.en} on ${b.date} have reached 150. Booking stays open – there is no limit.`, link: '#/dashboard/doctors' });
+  }
   const results = await notify.booking(booking, content, 'confirmed');
   res.json({ ok: true, booking: publicBooking(booking), notifications: results });
 });
 
 function publicBooking(b) {
-  return { code: b.code, status: b.status, doctorId: b.doctorId, doctorName: b.doctorName, date: b.date, time: b.time, name: b.name, phone: b.phone.replace(/\d(?=\d{3})/g, '•') };
+  return { token: b.token || undefined, code: b.code, status: b.status, doctorId: b.doctorId, doctorName: b.doctorName, date: b.date, time: b.time, name: b.name, phone: b.phone.replace(/\d(?=\d{3})/g, '•') };
 }
 function findOwn(code, phone) {
   const digits = String(phone || '').replace(/\D/g, '').slice(-8);
@@ -374,6 +418,7 @@ app.post('/api/bookings/reschedule', publicLimiter, async (req, res) => {
   if (err) return res.status(409).json({ error: err });
   b.history.push({ at: new Date().toISOString(), from: `${b.date} ${b.time}`, action: 'rescheduled' });
   b.date = req.body.date; b.time = schedule.hasFixedSchedule(doc) ? req.body.time : 'To be confirmed'; b.status = 'rescheduled';
+  if (schedule.isToken(doc)) { b.token = nextToken(doc.id, b.date); b.time = `Token ${b.token}`; }
   store.write('bookings', bookings);
   await notify.booking(b, content, 'rescheduled');
   res.json({ ok: true, booking: publicBooking(b) });
@@ -477,12 +522,13 @@ function saveContent(next, by) {
   store.snapshot('content', content);
   next.meta = { ...(next.meta || {}), updatedAt: new Date().toISOString(), updatedBy: by };
   delete next.answeredQuestions; delete next.notifyChannels;
+  numberDoctors(next, content.meta.doctorSeq);
   content = next;
   store.write('content', content);
 }
 const ctx = {
   prod: PROD, uploadDir: UPLOAD_DIR, privateDir: PRIVATE_DIR, opdDir: OPD_DIR, schedule, adminAuth: auth,
-  content: () => content, saveContent, doctors: () => publicContent().doctors, siteUrl: () => SITE_URL,
+  content: () => content, saveContent, doctors: allDoctors, mailer, saveBookings: () => store.write('bookings', bookings), siteUrl: () => SITE_URL,
   today: () => schedule.todayInNepal(), bookings: () => bookings,
   updateBooking(code, doctorId, change) {
     const b = bookings.find((x) => x.code === code && x.doctorId === doctorId);
@@ -496,6 +542,7 @@ const ctx = {
 accounts.mount(app, ctx);
 ctx.opd = opdLib.create(ctx);
 portal.mount(app, ctx);
+require('./lib/doctors').mount(app, ctx);
 app.use('/api/opd', ctx.opd.router);
 app.get('/api/admin/mail-status', auth, (req, res) => res.json(mailer.status()));
 // Notices and messages that waited because of the daily email limit go out once a day after 7 am (Nepal time).

@@ -786,6 +786,8 @@ module.exports = {
     maxPerSlot: 1,
     daysAhead: 30,
     closedDates: [],
+    // Standard hours for part-time doctors (both clinic and video). The evening changes by itself on switchDate (15 Magh 2083).
+    partTime: { morning: '07:00-09:00', evening: '16:00-19:00', eveningAfter: '17:00-19:00', switchDate: '2027-01-29', weekend: '07:00-19:00' },
     notifyEmail: '',
     notifyWhatsApp: '9855068737',
     instructions: t('Please arrive 15 minutes early with your previous reports and medicines. Consultation fee is paid at the reception.',
@@ -836,6 +838,13 @@ module.exports = {
     slotMinutes: 15,
     instant: true,
     instantStart: 'after_payment',
+    // Payment check is OFF for the trial period (27 Nov 2026): no receipt is asked and the video room opens at once.
+    paymentRequired: false,
+    // Words in the video-room chat that raise an alert to the Director (one per line). Phone numbers, emails and links are always blocked.
+    alertWords: ['Sancho', 'Sunaulo', 'Tulsi', 'Makawanpur Sahakari', 'Sahakari Hospital', 'City Hospital', 'Model Hospital', 'Hetauda Orthopaedic', 'CMC', 'Chure Hill', 'Hetauda Hospital', 'Alpha Polyclinic', 'Karra', 'Guransh', 'Subidha', 'Pandey', 'Ganesh Health', 'Careway',
+      'polyclinic', 'my clinic', 'mero clinic', 'clinic ma', 'home visit', 'my home', 'mero ghar', 'ghar ma', 'gharma', 'pharmacy ma', 'come to', 'aaunu', 'whatsapp', 'viber', 'facebook', 'messenger', 'imo', 'telegram', 'personal number', 'mero number', 'call me', 'esewa', 'khalti', 'cash',
+      'पोलिक्लिनिक', 'क्लिनिक', 'घरमा', 'मेरो नम्बर', 'साँचो', 'सुनौलो', 'तुलसी', 'सहकारी', 'सिटी हस्पिटल', 'मोडेल'].join('\n'),
+    patientWarning: t('NIKO doctors consult only through NIKO Hospital. Pay only to the NIKO Hospital QR shown on this website, and book every follow-up here or at the hospital. If anyone asks you to pay or visit somewhere else, please tell us on 057-520223.', 'निको अस्पतालका डाक्टरले निको अस्पतालमार्फत मात्र परामर्श दिनुहुन्छ । यस वेबसाइटमा देखाइएको निको अस्पतालको QR मा मात्र भुक्तानी गर्नुहोस् र फलोअप यहीँ वा अस्पतालमै बुक गर्नुहोस् । अन्यत्र बोलाइएमा वा भुक्तानी मागिएमा ०५७-५२०२२३ मा खबर गर्नुहोस् ।'),
     intro: t('See a NIKO Hospital specialist by video call from home. Choose a doctor and time, pay by Fonepay or eSewa, upload the receipt — and join the call from this website at your appointment time.', 'घरबाटै भिडियो कलमार्फत निको अस्पतालका विशेषज्ञसँग परामर्श गर्नुहोस् ।'),
     notFor: t('Not for emergencies. For chest pain, breathing difficulty, heavy bleeding, unconsciousness or injury, come to the Emergency or call 057-520223.', 'आकस्मिक अवस्थाका लागि होइन । आकस्मिक अवस्थामा ०५७-५२०२२३ मा फोन गर्नुहोस् ।'),
   },

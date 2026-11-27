@@ -48,7 +48,10 @@
     el.src = el.closest && el.closest('.doc,.portrait,.pick-doc,.director') ? avatarFor('') : 'img/ph/template.svg';
   }, true);
   function deptOf(id) { return (C.departments || []).find(function (d) { return d.id === id; }); }
-  function doctors() { return vis(C.doctors); }
+  function doctors() {
+    var l = vis(C.doctors), pv = window.NIKO_PREVIEW; // a doctor sees their own details that are still waiting for approval
+    return pv && pv.fields ? l.map(function (d) { return d.id === pv.doctorId ? Object.assign({}, d, pv.fields, { _pending: true }) : d; }) : l;
+  }
   function docById(id) { return doctors().find(function (d) { return d.id === id; }); }
   function plain(s) { return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, ''); }
 
@@ -171,17 +174,26 @@
   }
 
   // ------------------------------------------------------------ doctor info
-  function hoursOf(d) { return d.hours && /\d/.test(d.hours) ? d.hours : (C.booking && C.booking.defaultHours) || ''; }
+  function hoursOf(d) {
+    if (S.isVisiting(d)) return '';
+    if (d.dayHours || d.employment === 'part') { // hours can differ by day: show them grouped
+      var g = [], base = new Date(); base.setHours(0, 0, 0, 0);
+      for (var i = 0; i < 7; i++) { var dt = new Date(base.getTime() + i * 864e5), s = S.ymd(dt); if (!S.availableOn(d, s, C.booking)) continue; var h = S.hoursOn(d, s, C.booking), last = g[g.length - 1]; if (last && last.h === h) last.days.push(dt.getDay()); else g.push({ h: h, days: [dt.getDay()] }); }
+      var seen = {}; return g.filter(function (x) { if (seen[x.h]) { seen[x.h].days = seen[x.h].days.concat(x.days); return false; } seen[x.h] = x; return true; }).map(function (x) { x.days.sort(); return (x.days.length === 7 ? '' : x.days.map(function (n) { return dayName(S.DAYS[n]); }).join(', ') + ': ') + x.h; }).join(' · ');
+    }
+    return d.hours && /\d/.test(d.hours) ? d.hours : (C.booking && C.booking.defaultHours) || '';
+  }
   function scheduleOf(d) {
     var note = L(d.scheduleNote);
     if (note) return note;
+    if (S.isVisiting(d) && d.visitDates) return lang === 'ne' ? 'भ्रमण मितिमा' : 'On visit dates';
     if (+d.monthlyWeek > 0) return T('firstSat');
     if (d.days && d.days.length === 7) return T('everyDay');
     if (d.days && d.days.length) return d.days.map(dayName).join(', ');
     return '';
   }
   function availToday(d) { return S.hasFixedSchedule(d) && S.availableOn(d, today(), C.booking); }
-  function isVisiting(d) { return +d.monthlyWeek > 0; }
+  function isVisiting(d) { return S.isVisiting(d) || +d.monthlyWeek > 0; }
   function nextVisit(d) { return S.nextDates(d, C.booking, 1)[0]; }
 
   // ------------------------------------------------------------------ search
@@ -762,7 +774,7 @@
     var summary = '<div class="summary"><b>' + esc(L(d.name)) + '</b> — ' + esc(L(d.title)) + (w.date ? '<br>' + icon('cal', ' width="14" height="14" style="vertical-align:-2px"') + ' ' + esc(fmtDate(w.date)) + (w.time ? ' · ' + esc(w.time) : '') : '') + '</div>';
     if (w.step === 2) {
       var dates = S.nextDates(d, C.booking, isVisiting(d) && !(d.days || []).length ? 4 : 14);
-      var fixed = S.hasFixedSchedule(d);
+      var fixed = S.hasFixedSchedule(d) && !S.isToken(d);
       var html = steps + summary + '<h2 style="margin-top:16px">' + esc(T('chooseDate')) + '</h2><div class="dates" role="group" aria-label="' + esc(T('chooseDate')) + '">' + dates.map(function (s) {
         var dt = S.parse(s);
         return '<button type="button" data-act="wdate" data-d="' + s + '" aria-pressed="' + (w.date === s) + '" aria-label="' + esc(fmtDate(s, { weekday: 'long', day: 'numeric', month: 'long' })) + '"><small>' + esc(dayName(S.DAYS[dt.getDay()])) + '</small><b>' + dt.getDate() + '</b><small>' + esc(dt.toLocaleDateString(lang === 'ne' ? 'ne-NP' : 'en-GB', { month: 'short' })) + '</small></button>';
@@ -770,12 +782,12 @@
       if (w.date) {
         if (fixed) {
           var max = +C.booking.maxPerSlot || 1, now = new Date(), isToday = w.date === today();
-          var slots = S.slots(d, C.booking).filter(function (t) { if (!isToday) return true; var p = t.split(':'); return +p[0] * 60 + +p[1] > now.getHours() * 60 + now.getMinutes() + 30; });
+          var slots = S.slots(d, C.booking, w.date).filter(function (t) { if (!isToday) return true; var p = t.split(':'); return +p[0] * 60 + +p[1] > now.getHours() * 60 + now.getMinutes() + 30; });
           html += '<h2 style="margin-top:12px">' + esc(T('chooseTime')) + '</h2>' + (slots.length ? '<div class="slots" role="group" aria-label="' + esc(T('chooseTime')) + '">' + slots.map(function (t) {
             var full = (w.taken[t] || 0) >= max;
             return '<button type="button" data-act="wtime" data-t="' + t + '" aria-pressed="' + (w.time === t) + '"' + (full ? ' disabled aria-label="' + t + ' (booked)"' : '') + '>' + t + '</button>';
           }).join('') + '</div>' : '<p class="alert warn">' + esc(T('noSlots')) + '</p>');
-        } else html += '<p class="alert info" style="margin-top:12px">' + esc(T('timeConfirm')) + '</p>';
+        } else html += '<p class="alert info" style="margin-top:12px">' + esc(S.isToken(d) ? (lang === 'ne' ? 'समय छान्नु पर्दैन । बुक गरेपछि टोकन नम्बर पाइन्छ र बिरामीलाई टोकनको क्रममा हेरिन्छ ।' : 'No time to choose. You get a token number when you book, and patients are seen in token order on the day.') : T('timeConfirm')) + '</p>';
       }
       return html + '<div class="wiz-nav"><button class="btn ghost" data-act="wback">← ' + esc(T('back')) + '</button><button class="btn" data-act="wnext"' + (w.date && (w.time || !fixed) ? '' : ' disabled') + '>' + esc(T('next')) + ' →</button></div>';
     }
@@ -854,10 +866,10 @@
     return html + '</div>';
   }
   function reschedHTML() {
-    var m = st.manage, d = m.d, fixed = S.hasFixedSchedule(d);
+    var m = st.manage, d = m.d, fixed = S.hasFixedSchedule(d) && !S.isToken(d);
     var dates = S.nextDates(d, C.booking, 14);
     var h = '<h3 style="margin-top:12px">' + esc(T('reschedule')) + '</h3><div class="dates">' + dates.map(function (s) { var dt = S.parse(s); return '<button type="button" data-act="mdate" data-d="' + s + '" aria-pressed="' + (m.date === s) + '"><small>' + esc(dayName(S.DAYS[dt.getDay()])) + '</small><b>' + dt.getDate() + '</b><small>' + esc(dt.toLocaleDateString(lang === 'ne' ? 'ne-NP' : 'en-GB', { month: 'short' })) + '</small></button>'; }).join('') + '</div>';
-    if (m.date && fixed) h += '<div class="slots">' + S.slots(d, C.booking).map(function (t) { var full = (m.taken[t] || 0) >= (+C.booking.maxPerSlot || 1); return '<button type="button" data-act="mtime" data-t="' + t + '" aria-pressed="' + (m.time === t) + '"' + (full ? ' disabled' : '') + '>' + t + '</button>'; }).join('') + '</div>';
+    if (m.date && fixed && !S.isToken(d)) h += '<div class="slots">' + S.slots(d, C.booking, m.date).map(function (t) { var full = (m.taken[t] || 0) >= (+C.booking.maxPerSlot || 1); return '<button type="button" data-act="mtime" data-t="' + t + '" aria-pressed="' + (m.time === t) + '"' + (full ? ' disabled' : '') + '>' + t + '</button>'; }).join('') + '</div>';
     return h + '<p style="margin-top:12px"><button class="btn" data-act="msave"' + (m.date && (m.time || !fixed) ? '' : ' disabled') + '>' + esc(T('saveChanges')) + '</button></p><div class="msg" role="status"></div>';
   }
 

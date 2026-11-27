@@ -52,6 +52,7 @@
     patientName: 'Patient name (or initials)', consent: 'Patient gave written consent to publish',
     eyebrow: 'Small label above the title', tab: 'Short text on the slide tab', seconds: 'Show this slide for … seconds', startDate: 'Show from (optional)', endDate: 'Show until (optional)',
     instant: 'Offer “Consult right now” (no appointment time)', instantStart: 'Consult right now: when does the video room open?',
+    employment: 'Full-time, part-time or visiting', paymentRequired: 'Ask patients to pay and upload a receipt before a video consultation (off during the trial)', alertWords: 'Chat alert words – other hospitals, clinics etc. (one per line)', patientWarning: 'Warning shown to patients (pay and follow up only through NIKO)', partTime: 'Standard hours for part-time doctors', switchDate: 'Evening hours change on this date (15 Magh 2083 = 2027-01-29)', eveningAfter: 'Evening hours from that date', weekend: 'Saturday and Sunday hours',
     degreeLevel: 'Degree level (sets video consultation fee)', videoConsult: 'Takes video consultations', fonepayQr: 'Fonepay QR code image', esewaQr: 'eSewa QR code image', accountName: 'Account name shown under the QR',
     feeMD: 'Video consultation fee – MD doctors (Rs)', feeDM: 'Video consultation fee – DM doctors (Rs)', homeCollectionFee: 'Home collection charge (Rs, 0 = free)', collectionSlots: 'Collection time slots (one per line)',
     homeCollection: 'Offer home sample collection', includes: 'Tests in this panel (shown under the name)', keywords: 'Extra search words', notFor: 'Warning text (not for emergencies)', price: 'Price (Rs, empty = ask at the hospital)', forWhom: 'Who it is for', tests: 'Tests included',
@@ -72,6 +73,7 @@
   var SELECTS = {
     kind: [['news', 'News'], ['event', 'Event']], type: [['notice', 'Notice'], ['vacancy', 'Vacancy']],
     degreeLevel: [['MD', 'MD / MS (Rs 700)'], ['DM', 'DM / MCh (Rs 950)']],
+    employment: [['part', 'Part-time (standard part-time hours)'], ['full', 'Full-time'], ['visiting', 'Visiting specialist (visit dates, token booking, no video)']],
     instantStart: [['after_payment', 'After the payment is confirmed (safer)'], ['on_receipt', 'As soon as the receipt is uploaded (payment checked afterwards)']],
     category: [['success', 'Success story'], ['launch', 'New service'], ['news', 'News'], ['health', 'Health alert / epidemic'], ['director', 'Director’s article']],
     gender: [['', '—'], ['Male', 'Male'], ['Female', 'Female']], monthlyDay: [['', '—'], ['Sun', 'Sunday'], ['Mon', 'Monday'], ['Tue', 'Tuesday'], ['Wed', 'Wednesday'], ['Thu', 'Thursday'], ['Fri', 'Friday'], ['Sat', 'Saturday']],
@@ -80,7 +82,7 @@
   };
   var LONG = /^(intro|notFor|body|message|description|summary|what|symptoms|prepare|treatment|recovery|urgent|bio|story|text|a|intro|mission|vision|privacy|portalIntro|conditionPrepare|conditionDisclaimer|instructions|note)$/;
   var IMAGES = /^(image|photo|logo|fonepayQr|esewaQr|pillarsImage)$/;
-  var HIDE = { meta: 1, answeredQuestions: 1, notifyChannels: 1, source: 1, fromForm: 1 };
+  var HIDE = { meta: 1, answeredQuestions: 1, notifyChannels: 1, source: 1, fromForm: 1, no: 1, off: 1, visitDates: 1, dayHours: 1, videoHours: 1, private: 1, template: 1 };
   var COLORS = /^(primary|primaryDark|accent|emergency|background|surface|text|mutedText)$/;
 
   var t = function (en, ne) { return { en: en || '', ne: ne || '' }; };
@@ -93,7 +95,7 @@
     tests: function () { return { id: 'test-' + Date.now().toString(36), category: 'Other', name: 'New test', price: '', sample: 'Blood', fasting: false, includes: '', keywords: '', homeCollection: true, visible: true }; },
     stats: function () { return { value: '0', label: t('Label') }; },
     departments: function () { return { id: 'new-dept-' + Date.now().toString(36), name: t('New department'), icon: 'stethoscope', summary: t(), keywords: [], image: '' }; },
-    doctors: function () { return { id: 'D' + Date.now().toString(36).slice(-4), name: t('Dr. '), title: t(), dept: '', degrees: '', nmc: '', affiliation: '', gender: '', languages: ['Nepali', 'English'], days: [], monthlyWeek: 0, monthlyDay: '', scheduleNote: t(), hours: '', photo: 'img/ph/P19.svg', focus: [], bio: t(), featured: false, visible: true, lockFromForm: false }; },
+    doctors: function () { var m = A.content.meta = A.content.meta || {}; m.doctorSeq = Math.max(+m.doctorSeq || 0, Math.max.apply(null, [0].concat((A.content.doctors || []).map(function (d) { return +d.no || 0; })))) + 1; /* next serial doctor ID: numbers only, never used again */ return { id: String(m.doctorSeq), no: m.doctorSeq, employment: 'part', degreeLevel: 'MD', videoConsult: true, name: t('Dr. '), title: t(), dept: '', degrees: '', nmc: '', affiliation: '', gender: '', languages: ['Nepali', 'English'], days: [], monthlyWeek: 0, monthlyDay: '', scheduleNote: t(), hours: '', photo: 'img/ph/P19.svg', focus: [], bio: t(), featured: false, visible: true, lockFromForm: false }; },
     conditions: function () { return { id: 'condition-' + Date.now().toString(36), dept: '', name: t('New condition'), keywords: [], what: t(), symptoms: t(), prepare: t(), treatment: t(), recovery: t(), urgent: t(), visible: true }; },
     facilities: function () { return { id: 'facility-' + Date.now().toString(36), name: t('New facility'), short: t(), description: t(), image: 'img/ph/P19.svg', photoNo: '', open247: false, visible: true }; },
     services: function () { return { name: t('New service'), description: t(), icon: 'stethoscope', visible: true }; },
@@ -116,7 +118,7 @@
       ['about', 'About us', '#/about', ''],
       ['director', 'Director’s message', '#/about', ''],
       ['departments', 'Departments', '#/departments', ''],
-      ['doctors', 'Doctors', '#/doctors', 'Doctors who fill in the Google Form are added automatically (see “Doctor form & Google”). You can also add or edit doctors here.'],
+      ['doctors', 'Doctors', '#/doctors', 'Add a doctor here: the doctor ID is given automatically (next number, never used again). Doctors then sign in and fill in their own details; days off, visit dates, hours and video-from-home hours are in your Dashboard → Doctors & schedules.'],
       ['conditions', 'Conditions we treat', '#/conditions', 'Patient-friendly pages. Write in simple words.'],
       ['facilities', 'Facilities & diagnostics', '#/facilities', ''],
       ['services', 'Services', '#/facilities', ''],
