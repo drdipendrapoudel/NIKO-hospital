@@ -521,6 +521,7 @@
   N.PAGES.room = function (id) {
     return head(t('Video consultation', 'भिडियो परामर्श'), '', T('videoConsult')) + '<section class="section"><div class="container" id="roomBox"><p>' + esc(T('loading')) + '</p></div></section>';
   };
+  function rbtn(act, ic, label) { return '<button data-pact="' + act + '" aria-label="' + esc(label) + '" title="' + esc(label) + '" hidden>' + icon(ic) + '</button>'; }
   function roomUrl(hash) { return location.origin + location.pathname + hash; }
   function roomInit(id, q) {
     var key = (q && q.k) || '';
@@ -532,9 +533,10 @@
     api('GET', 'api/p/room/' + encodeURIComponent(id)).then(function (j) {
       var c = j.consult, me = j.me, doc = me === 'doctor', open = c.status === 'confirmed';
       P.room = { id: id, key: key, hash: '#/room/' + id + (key ? '?k=' + encodeURIComponent(key) : ''), me: me, guest: j.guest, ice: j.ice, after: 0, pc: null, local: null, queue: [], timer: null, joined: false, live: false, connected: false, consult: c, invite: '' };
-      box.innerHTML = '<div class="room"><div><div class="stage"><video id="remoteV" autoplay playsinline></video><div class="msg" id="stageMsg">' + esc(doc ? t('Press “Start” to turn on your camera. If the patient is not here yet, you wait in the room and the call begins by itself when they arrive.', '“Start” थिच्नुहोस् । बिरामी नआएसम्म कोठामा पर्खनुहोस् ।') : t('Press “Join” and allow the camera and microphone. If the doctor is not here yet, you wait in the room and the call begins by itself when the doctor arrives.', '“Join” थिच्नुहोस् र क्यामेरा/माइक अनुमति दिनुहोस् । डाक्टर नआएसम्म कोठामा पर्खनुहोस् ।')) + '</div><video id="localV" class="me" autoplay playsinline muted hidden></video></div>' +
-        '<div class="controls" style="margin-top:12px"><button class="btn" data-pact="r-join" style="border-radius:999px;height:54px"' + (open ? '' : ' disabled') + '>' + icon('video') + esc(doc ? t('Start', 'सुरु') : t('Join', 'जोडिनुहोस्')) + '</button>' +
-        '<button data-pact="r-mic" aria-label="Microphone" hidden>' + icon('mic') + '</button><button data-pact="r-cam" aria-label="Camera" hidden>' + icon('video') + '</button><button class="end" data-pact="r-end" hidden>' + icon('phone') + esc(t('End', 'अन्त्य')) + '</button></div>' +
+      box.innerHTML = '<div class="room"><div><div class="callwrap" id="callWrap"><div class="stage" id="stage"><video id="remoteV" autoplay playsinline></video><div class="top" id="stageTop"><span class="live" id="callTime" hidden>00:00</span><span class="warn" id="otherMic" hidden>' + icon('micoff') + esc(doc ? t('Patient’s microphone is off', 'बिरामीको माइक बन्द छ') : t('Doctor’s microphone is off', 'डाक्टरको माइक बन्द छ')) + '</span><span class="warn" id="otherCam" hidden>' + icon('camoff') + esc(doc ? t('Patient’s camera is off', 'बिरामीको क्यामेरा बन्द छ') : t('Doctor’s camera is off', 'डाक्टरको क्यामेरा बन्द छ')) + '</span></div><div class="msg" id="stageMsg">' + esc(doc ? t('Press “Start” to turn on your camera. If the patient is not here yet, you wait in the room and the call begins by itself when they arrive.', '“Start” थिच्नुहोस् । बिरामी नआएसम्म कोठामा पर्खनुहोस् ।') : t('Press “Join” and allow the camera and microphone. If the doctor is not here yet, you wait in the room and the call begins by itself when the doctor arrives.', '“Join” थिच्नुहोस् र क्यामेरा/माइक अनुमति दिनुहोस् । डाक्टर नआएसम्म कोठामा पर्खनुहोस् ।')) + '</div><video id="localV" class="pip mirror" data-pact="r-swap" title="' + esc(t('Tap to swap the two pictures', 'दुई तस्बिर साट्न थिच्नुहोस्')) + '" autoplay playsinline muted hidden></video></div>' +
+        '<div class="controls"><button class="btn" data-pact="r-join" style="border-radius:999px;height:54px"' + (open ? '' : ' disabled') + '>' + icon('video') + esc(doc ? t('Start', 'सुरु') : t('Join', 'जोडिनुहोस्')) + '</button>' +
+        rbtn('r-mic', 'mic', t('Microphone on / off', 'माइक खोल्ने / बन्द गर्ने')) + rbtn('r-cam', 'video', t('Camera on / off', 'क्यामेरा खोल्ने / बन्द गर्ने')) + rbtn('r-flip', 'flip', t('Switch camera (front / back)', 'क्यामेरा फेर्ने (अगाडि / पछाडि)')) + rbtn('r-screen', 'screen', t('Share your screen', 'स्क्रिन देखाउने')) + rbtn('r-fit', 'image', t('Fill the window / show the whole picture', 'पूरा भर्ने / सबै देखाउने')) + rbtn('r-max', 'maxi', t('Full screen', 'पूरा स्क्रिन')) +
+        '<button class="end" data-pact="r-end" hidden>' + icon('phone') + esc(t('End', 'अन्त्य')) + '</button></div></div>' +
         '<p class="small muted" id="roomTip" style="text-align:center;margin-top:10px"></p>' +
         (open ? '<div class="waitbox" id="waitBox"><p class="here" id="hereMsg" role="status"></p><div id="shareBox"><p class="small" style="margin:0 0 8px"><b>' + esc(doc ? t('Send the patient a quick link', 'बिरामीलाई छिटो लिङ्क पठाउनुहोस्') : t('Send the doctor a quick link', 'डाक्टरलाई छिटो लिङ्क पठाउनुहोस्')) + '</b> — ' + esc(t('they tap it and come straight into this call, no sign-in.', 'थिच्नासाथ सिधै यही कलमा आउँछन्, साइन इन चाहिँदैन ।')) + '</p>' +
           (doc && j.manager && !c.hasEmail ? '<input id="inviteTo" type="email" placeholder="' + esc(t('Patient’s email (for the Email button)', 'बिरामीको इमेल')) + '" style="width:100%;margin-bottom:8px">' : '') +
@@ -585,15 +587,96 @@
     R.pc = pc; R.queue = [];
     R.local.getTracks().forEach(function (tr) { pc.addTrack(tr, R.local); });
     pc.onicecandidate = function (e) { if (e.candidate) sig('ice', e.candidate.toJSON ? e.candidate.toJSON() : e.candidate); };
-    pc.ontrack = function (e) { var v = $('#remoteV'); if (v && v.srcObject !== e.streams[0]) { v.srcObject = e.streams[0]; } var m = $('#stageMsg'); if (m) m.hidden = true; };
+    pc.ontrack = function (e) { var v = $('#remoteV'); if (v && v.srcObject !== e.streams[0]) { v.srcObject = e.streams[0]; v.onloadedmetadata = v.onresize = roomShape; } var m = $('#stageMsg'); if (m) m.hidden = true; };
     pc.onconnectionstatechange = function () {
       var m = $('#stageMsg'), s = pc.connectionState;
-      if (s === 'connected') { R.connected = true; if (m) m.hidden = true; $('#roomTip').textContent = ''; var wb = $('#waitBox'); if (wb) wb.hidden = true; }
+      if (s === 'connected') { R.connected = true; roomTune(); roomState(); roomClock(); if (m) m.hidden = true; $('#roomTip').textContent = ''; var wb = $('#waitBox'); if (wb) wb.hidden = true; }
       if (s === 'failed' || s === 'disconnected' || s === 'closed') R.connected = false;
       if ((s === 'failed' || s === 'disconnected') && m) { m.hidden = false; m.textContent = t('Connection lost. Waiting to reconnect…', 'जडान टुट्यो । पुन: जोडिँदै…'); if (R.me === 'doctor' && s === 'failed') offer(); }
     };
     return pc;
   }
+  // best picture the connection allows: up to 720p, 2.5 Mbit/s for the camera, more detail for a shared screen
+  function roomTune() {
+    var R = P.room; if (!R || !R.pc || !R.pc.getSenders) return;
+    R.pc.getSenders().forEach(function (sd) {
+      if (!sd.track || sd.track.kind !== 'video' || !sd.getParameters) return;
+      try {
+        var pr = sd.getParameters(); if (!pr.encodings || !pr.encodings.length) pr.encodings = [{}];
+        pr.encodings[0].maxBitrate = R.sharing ? 3000000 : 2500000;
+        pr.degradationPreference = R.sharing ? 'maintain-resolution' : 'balanced';
+        sd.setParameters(pr).catch(function () {});
+      } catch (e) {}
+    });
+  }
+  // tell the other person whether my microphone and camera are on
+  function roomState() {
+    var R = P.room; if (!R || !R.local) return;
+    var a = R.local.getAudioTracks()[0], v = R.local.getVideoTracks()[0];
+    sig('state', { mic: !!(a && a.enabled), cam: !!(v && v.enabled) });
+  }
+  function roomClock() {
+    var R = P.room; if (!R || R.clock) return;
+    R.t0 = Date.now();
+    R.clock = setInterval(function () {
+      var el = $('#callTime'); if (P.room !== R || !el) { clearInterval(R.clock); return; }
+      var s = Math.floor((Date.now() - R.t0) / 1000), mm = Math.floor(s / 60), ss = s % 60;
+      el.hidden = false; el.textContent = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+    }, 1000);
+  }
+  // a tall picture (a phone held upright) gets a tall window, so the whole picture is large
+  function roomShape() {
+    var st = $('#stage'); if (!st) return;
+    var big = $('video:not(.pip)', st) || $('#remoteV');
+    st.classList.toggle('tall', !!(big && big.videoWidth && big.videoHeight > big.videoWidth * 1.1));
+  }
+  // put a new picture (other camera, or the screen) into the call without reconnecting
+  function roomVideo(track, mirror) {
+    var R = P.room, old = R.local.getVideoTracks()[0];
+    if (old) { R.local.removeTrack(old); if (old !== R.camTrack || !R.sharing) old.stop(); }
+    R.local.addTrack(track);
+    if (R.pc) R.pc.getSenders().forEach(function (sd) { if (sd.track && sd.track.kind === 'video' || (!sd.track && sd === R.vSender)) { R.vSender = sd; sd.replaceTrack(track).catch(function () {}); } });
+    var lv = $('#localV'); lv.srcObject = R.local; lv.classList.toggle('mirror', !!mirror);
+    var cb = $('[data-pact=r-cam]'); if (cb) { cb.classList.remove('off'); cb.innerHTML = icon('video'); }
+    roomTune(); roomState();
+  }
+  function roomFlip() {
+    var R = P.room; if (!R || !R.local || R.sharing || R.busy) return;
+    R.busy = true;
+    var want = R.facing === 'environment' ? 'user' : 'environment', old = R.local.getVideoTracks()[0];
+    if (old) old.stop(); // phones open one camera at a time
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: want }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } }).then(function (st) {
+      R.facing = want; R.camTrack = st.getVideoTracks()[0]; roomVideo(R.camTrack, want === 'user');
+    }).catch(function () {
+      return navigator.mediaDevices.getUserMedia({ video: true }).then(function (st) { R.camTrack = st.getVideoTracks()[0]; roomVideo(R.camTrack, R.facing !== 'environment'); });
+    }).catch(function () {}).then(function () { R.busy = false; });
+  }
+  function roomScreen(el) {
+    var R = P.room; if (!R || !R.local || R.busy) return;
+    if (R.sharing) { roomUnshare(); return; }
+    R.busy = true;
+    navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 15 } }, audio: false }).then(function (st) {
+      var tr = st.getVideoTracks()[0];
+      R.sharing = true; R.screenTrack = tr; try { tr.contentHint = 'detail'; } catch (e) {}
+      tr.onended = roomUnshare;
+      roomVideo(tr, false); el.classList.add('on');
+    }).catch(function () {}).then(function () { R.busy = false; });
+  }
+  function roomUnshare() {
+    var R = P.room; if (!R || !R.sharing) return;
+    var sc = R.screenTrack; R.sharing = false; R.screenTrack = null;
+    var b = $('[data-pact=r-screen]'); if (b) b.classList.remove('on');
+    var back = function (tr) { R.camTrack = tr; roomVideo(tr, R.facing !== 'environment'); if (sc) { sc.onended = null; sc.stop(); } };
+    if (R.camTrack && R.camTrack.readyState === 'live') back(R.camTrack);
+    else navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: R.facing || 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } }).then(function (st) { back(st.getVideoTracks()[0]); }).catch(function () { if (sc) sc.stop(); });
+  }
+  function roomMax(on) {
+    var w = $('#callWrap'); if (!w) return;
+    if (on === undefined) on = !w.classList.contains('max');
+    w.classList.toggle('max', on); document.body.classList.toggle('call-max', on);
+    var b = $('[data-pact=r-max]'); if (b) b.innerHTML = icon(on ? 'mini' : 'maxi');
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.body.classList.contains('call-max')) roomMax(false); });
   function offer() {
     var pc = newPC();
     pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { sig('offer', { type: pc.localDescription.type, sdp: pc.localDescription.sdp }); });
@@ -620,7 +703,11 @@
         } else if (m.type === 'ice') {
           if (R.pc && R.pc.remoteDescription) R.pc.addIceCandidate(m.data).catch(function () {}); else R.queue.push(m.data);
         } else if (m.type === 'chat') { chatAdd(m.from === 'doctor' ? t('Doctor', 'डाक्टर') : t('Patient', 'बिरामी'), (m.data || {}).text || '');
+        } else if (m.type === 'state') {
+          var om = $('#otherMic'), oc = $('#otherCam'), d = m.data || {};
+          if (om) om.hidden = d.mic !== false; if (oc) oc.hidden = d.cam !== false;
         } else if (m.type === 'leave') {
+          var om2 = $('#otherMic'), oc2 = $('#otherCam'); if (om2) om2.hidden = true; if (oc2) oc2.hidden = true;
           var msg = $('#stageMsg'); if (msg) { msg.hidden = false; msg.textContent = R.me === 'doctor' ? t('The patient left the call.', 'बिरामीले कल छोडे ।') : t('The doctor ended the call.', 'डाक्टरले कल अन्त्य गर्नुभयो ।'); }
         }
       });
@@ -630,10 +717,13 @@
   function roomJoin() {
     var R = P.room; if (!R || R.joined) return;
     if (!navigator.mediaDevices || !window.RTCPeerConnection) { $('#roomTip').textContent = t('This browser cannot make video calls. Please use Chrome or Safari, or the backup room link.', 'यो ब्राउजरले भिडियो कल गर्न सक्दैन ।'); return; }
-    navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 960 }, height: { ideal: 540 } }, audio: { echoCancellation: true, noiseSuppression: true } }).then(function (stream) {
-      R.local = stream; R.joined = true;
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } }, audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(function (stream) {
+      R.local = stream; R.joined = true; R.facing = 'user'; R.camTrack = stream.getVideoTracks()[0];
       var lv = $('#localV'); lv.srcObject = stream; lv.hidden = false;
-      $$('[data-pact=r-mic],[data-pact=r-cam],[data-pact=r-end]').forEach(function (b) { b.hidden = false; });
+      $$('[data-pact=r-mic],[data-pact=r-cam],[data-pact=r-end],[data-pact=r-fit],[data-pact=r-max]').forEach(function (b) { b.hidden = false; });
+      var phone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ''));
+      if (navigator.mediaDevices.getDisplayMedia && !phone) $('[data-pact=r-screen]').hidden = false;
+      if (navigator.mediaDevices.enumerateDevices) navigator.mediaDevices.enumerateDevices().then(function (ds) { var n = ds.filter(function (d) { return d.kind === 'videoinput'; }).length, fb = $('[data-pact=r-flip]'); if (fb && (n > 1 || (phone && n !== 1))) fb.hidden = false; }).catch(function () {});
       $('[data-pact=r-join]').hidden = true;
       $('#stageMsg').textContent = R.me === 'doctor' ? t('Waiting for the patient to join…', 'बिरामीको पर्खाइमा…') : t('Waiting for the doctor…', 'डाक्टरको पर्खाइमा…');
       // read only what is new from now on, then announce ourselves
@@ -647,6 +737,8 @@
     if (R.joined) sig('leave');
     if (R.pc) try { R.pc.close(); } catch (e) {}
     if (R.local) R.local.getTracks().forEach(function (tr) { tr.stop(); });
+    [R.camTrack, R.screenTrack].forEach(function (tr) { if (tr) { tr.onended = null; try { tr.stop(); } catch (e) {} } });
+    clearInterval(R.clock); document.body.classList.remove('call-max');
     P.room = null; P.roomKey = '';
   }
   window.addEventListener('beforeunload', function () { if (P.room && P.room.joined && navigator.sendBeacon) { /* best effort */ roomLeave(); } });
@@ -833,8 +925,13 @@
         api('PATCH', 'api/acct/admin/accounts/' + id, body2).then(function () { done(); }).catch(err); break;
       case 'edit-decide': var nt = $('[data-note="' + id + '"]'); api('POST', 'api/p/approvals/edit/' + id, { approve: !!el.getAttribute('data-ok'), note: nt ? nt.value : '' }).then(function () { done(el.getAttribute('data-ok') ? t('Published on the website', 'वेबसाइटमा प्रकाशित') : t('Rejected', 'अस्वीकृत')); }).catch(err); break;
       case 'r-join': roomJoin(); break;
-      case 'r-mic': var at = P.room.local.getAudioTracks()[0]; at.enabled = !at.enabled; el.classList.toggle('off', !at.enabled); el.innerHTML = icon(at.enabled ? 'mic' : 'micoff'); break;
-      case 'r-cam': var vt = P.room.local.getVideoTracks()[0]; vt.enabled = !vt.enabled; el.classList.toggle('off', !vt.enabled); el.innerHTML = icon(vt.enabled ? 'video' : 'camoff'); break;
+      case 'r-mic': var at = P.room.local.getAudioTracks()[0]; if (!at) break; at.enabled = !at.enabled; el.classList.toggle('off', !at.enabled); el.innerHTML = icon(at.enabled ? 'mic' : 'micoff'); roomState(); break;
+      case 'r-cam': var vt = P.room.local.getVideoTracks()[0]; if (!vt) break; vt.enabled = !vt.enabled; el.classList.toggle('off', !vt.enabled); el.innerHTML = icon(vt.enabled ? 'video' : 'camoff'); roomState(); break;
+      case 'r-flip': roomFlip(); break;
+      case 'r-screen': roomScreen(el); break;
+      case 'r-fit': var stg = $('#stage'); el.classList.toggle('on', stg.classList.toggle('fill')); break;
+      case 'r-max': roomMax(); break;
+      case 'r-swap': var lv2 = $('#localV'), rv2 = $('#remoteV'); if (!rv2.srcObject) break; var mine = lv2.classList.contains('pip'); lv2.classList.toggle('pip', !mine); rv2.classList.toggle('pip', mine); (mine ? rv2 : lv2).setAttribute('data-pact', 'r-swap'); (mine ? lv2 : rv2).removeAttribute('data-pact'); roomShape(); break;
       case 'r-end': var rh = P.room.hash; roomLeave(); $('#roomBox').innerHTML = '<div class="done-box card"><h2>' + esc(t('Call ended', 'कल समाप्त')) + '</h2><p><a class="btn" href="' + esc(rh) + '" data-pact="r-rejoin">' + esc(t('Rejoin', 'फेरि जोडिनुहोस्')) + '</a>' + (P.me ? ' <a class="btn ghost" href="#/dashboard/consults">' + esc(T('dashboard')) + '</a>' : '') + '</p></div>'; break;
       case 'r-rejoin': e.preventDefault(); var ph = N.parseHash(); roomInit(ph.id, ph.q); break;
       case 'r-complete': var nts = ($('#docNotes') || {}).value || ''; api('POST', 'api/p/consults/' + P.room.consult.id + '/status', { status: 'completed', notes: nts, followUpDays: +(($('#docFollow') || {}).value || 0) }).then(function () { roomLeave(); toast(t('Marked completed', 'सम्पन्न भयो')); location.hash = '#/dashboard/consults'; }).catch(err); break;
