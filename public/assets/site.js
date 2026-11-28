@@ -393,17 +393,23 @@
       var slides = liveSlides(); if (!slides.length) return '';
       var cur = st.slideIdx % slides.length, h = C.hospital, r = C.registration || {};
       var badge = L(r.registeredWith) || L(h.tagline);
-      return '<section class="hero" aria-roledescription="carousel" aria-label="Highlights">' + slides.map(function (s, i) {
+      var PLAY = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+      return '<section class="hero hero2" aria-roledescription="carousel" aria-label="Highlights"><div class="container hero-in"><div class="slides">' + slides.map(function (s, i) {
         var on = i === cur, link = s.buttonLink || '#/book';
         var second = link === '#/book' ? ['#/consult', T('videoConsult')] : ['#/book', T('book')];
-        return '<div class="slide' + (on ? ' on' : '') + '" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' / ' + slides.length + '"' + (on ? '' : ' aria-hidden="true"') + '>' + img(s.image, L(s.title), '', i === 0) +
-          '<div class="shade"></div><div class="cap"><div class="container">' + (badge ? '<div class="badge-pill">' + icon('shield') + esc(badge) + '</div>' : '') +
+        return '<div class="slide' + (on ? ' on' : '') + '" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' / ' + slides.length + '"' + (on ? '' : ' aria-hidden="true"') + '>' +
+          '<div class="cap">' + (badge ? '<div class="badge-pill">' + esc(badge) + '</div>' : '') +
           (L(s.eyebrow) ? '<div class="eb">' + esc(L(s.eyebrow)) + '</div>' : '') + '<h2>' + esc(L(s.title)) + '</h2>' + (L(s.text) ? '<p>' + esc(L(s.text)) + '</p>' : '') +
-          '<div class="acts">' + (L(s.buttonText) ? '<a class="btn" href="' + esc(link) + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(L(s.buttonText)) + ' →</a>' : '') +
-          '<a class="btn glass" href="' + second[0] + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(second[1]) + '</a></div></div></div></div>';
-      }).join('') + (slides.length > 1 ? '<div class="tabs-row"><div class="container">' + slides.map(function (s, i) {
+          '<div class="acts">' + (L(s.buttonText) ? '<a class="btn" href="' + esc(link) + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(L(s.buttonText)) + '</a>' : '') +
+          '<a class="btn ghost" href="' + second[0] + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(second[1]) + '</a></div></div>' +
+          '<div class="media">' + img(s.image, L(s.title), '', i === 0) + '</div></div>';
+      }).join('') + '</div>' + (slides.length > 1 ? '<div class="tabs-row">' + slides.map(function (s, i) {
         return '<button class="htab" data-act="slide-go" data-i="' + i + '" aria-current="' + (i === cur) + '" style="--dur:' + slideSecs(s) + 's"><small>' + esc(L(s.eyebrow) || ('0' + (i + 1))) + '</small><b>' + esc(L(s.tab) || L(s.title)) + '</b><span class="bar"><i></i></span></button>';
-      }).join('') + '</div></div><button class="pause" data-act="slide-pause" aria-label="' + (st.slidePaused ? 'Play slideshow' : 'Pause slideshow') + '">' + (st.slidePaused ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>') + '</button>' : '') + '</section>';
+      }).join('') + '</div><button class="pause" data-act="slide-pause" aria-label="' + (st.slidePaused ? 'Play slideshow' : 'Pause slideshow') + '">' + (st.slidePaused ? PLAY : PAUSE) + '</button>' : '') + '</div></section>';
+    },
+    emBand: function () {
+      var h = C.hospital; if (!h || !h.phone24) return '';
+      return '<section class="section embandsec"><div class="container"><div class="emband"><div><h2>' + esc(T('emBandTitle')) + '</h2><p>' + esc(T('emBandSub')) + '</p></div><a class="emcall" href="' + tel(h.phone24) + '">' + esc(h.phone24) + '</a></div></div></section>';
     },
     quickActions: function () {
       var h = C.hospital;
@@ -553,7 +559,7 @@
   var PAGES = {
     '': function () {
       var html = (C.home.sections || []).filter(function (s) { return s.visible !== false; }).map(function (s) { return HOME[s.id] ? HOME[s.id](s) : ''; }).join('');
-      return html;
+      return html + HOME.emBand();
     },
     about: function () {
       var a = C.about, d = C.director, r = C.registration || {};
@@ -947,7 +953,7 @@
     ['fit1', 'fit2', 'fit3'].forEach(function (c) { if (over()) hdr.classList.add(c); });
   }
   function fitHero() {
-    var hero = $('.hero'); if (!hero) return;
+    var hero = $('.hero'); if (!hero || hero.classList.contains('hero2')) return;
     hero.style.height = '';
     var base = hero.offsetHeight, tabs = $('.tabs-row', hero);
     var space = tabs ? base - tabs.offsetTop + 14 : 20;
